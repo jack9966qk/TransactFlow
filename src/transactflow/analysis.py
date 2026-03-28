@@ -2,12 +2,12 @@ from collections import defaultdict
 from dataclasses import dataclass
 from datetime import timedelta
 from enum import Enum
-from rates import RetrivedRates, getOrRetrieveLatestRates
-from base import *
-from multiCurrency import MultiCurrencyAmount, embeddedOrLatestRatesFor, sumCurrencyAmounts, amountInJPY, totalAdjustedAmount, totalAdjustedAmountAsJPY, totalRawAmount, totalRawAmountAsJPY
+from .rates import RetrivedRates, getOrRetrieveLatestRates
+from .base import *
+from .multiCurrency import MultiCurrencyAmount, embeddedOrLatestRatesFor, sumCurrencyAmounts, amountInJPY, totalAdjustedAmount, totalAdjustedAmountAsJPY, totalRawAmount, totalRawAmountAsJPY
 from typing import Callable, DefaultDict, FrozenSet, Generator, List, Dict, Optional, Set, Tuple, TypeVar, Union, cast
 from collections import OrderedDict
-from processes.sharedMatchings import *
+from .processes.sharedMatchings import *
 import itertools
 
 # @dataclass

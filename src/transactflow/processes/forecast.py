@@ -1,9 +1,9 @@
 from collections import defaultdict
-from base import *
+from ..base import *
 from datetime import timedelta
 from itertools import product
-from multiCurrency import totalAdjustedAmountAsJPY
-from process import Process, funcProcess, sortByDateAndMore, groupedProcessWrapper
+from ..multiCurrency import totalAdjustedAmountAsJPY
+from ..process import Process, funcProcess, sortByDateAndMore, groupedProcessWrapper
 
 def forecastMonthlyTransactions(
     targetYear: int

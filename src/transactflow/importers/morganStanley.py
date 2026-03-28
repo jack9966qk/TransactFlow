@@ -4,7 +4,7 @@ from ..base import *
 from ..importers.importer import CsvImporter, readCsvWithRawAndLineNum
 from dateutil.parser import parse as parseDate
 from dataclasses import dataclass
-from ..userCconfig import forceReadUserConfig
+from ..userConfig import forceReadUserConfig
 
 @dataclass
 class VestedEquityItem:

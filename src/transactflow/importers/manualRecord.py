@@ -1,6 +1,6 @@
-from base import *
-from process import *
-from importers.importer import CsvImporter
+from ..base import *
+from ..process import *
+from .importer import CsvImporter
 from dateutil.parser import parse as parseDate
 from typing import List
 

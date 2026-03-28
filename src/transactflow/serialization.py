@@ -1,5 +1,5 @@
 from typing import Dict
-from base import *
+from .base import *
 from datetime import date
 import json
 

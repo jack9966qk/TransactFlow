@@ -1,6 +1,6 @@
-from processes.runAll import run
-from analysis import AnalysisProvider
-from base import splitIntoTimeSectionsBySalaryIncome
+from transactflow.processes.runAll import run
+from transactflow.analysis import AnalysisProvider
+from transactflow.base import splitIntoTimeSectionsBySalaryIncome
 
 # Initialize analysis provider.
 trans = run()

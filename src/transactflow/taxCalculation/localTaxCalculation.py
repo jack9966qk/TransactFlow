@@ -2,8 +2,8 @@ from dataclasses import dataclass, field
 import logging
 from tabnanny import check
 from typing import Tuple
-from taxCalculation.nationalTaxCalculation import NationalTaxCalculator
-from taxCalculation.nationalTaxCalculation import DependentsConfig
+from .nationalTaxCalculation import NationalTaxCalculator
+from .nationalTaxCalculation import DependentsConfig
 import math
 
 # During last check, the document says:

@@ -1,11 +1,11 @@
 from dataclasses import dataclass
-from base import JPY, SOURCE_CUTOFF, Account, Date, MoneyAmount, Transaction, synthesizedTransaction
+from ..base import JPY, SOURCE_CUTOFF, Account, Date, MoneyAmount, Transaction, synthesizedTransaction
 from typing import Any, Dict, Iterator, List, Callable, Optional, TextIO, Tuple, Union
 import itertools
 import csv
 from dateutil.parser import parse as parseDate
 
-from process import sortByDateAndMore
+from ..process import sortByDateAndMore
 
 def readDateOfTimestampFile(path: str) -> Date:
     with open(path, "r") as f:

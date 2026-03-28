@@ -1,6 +1,6 @@
 from asyncio import threads
 from typing import List
-from taxSummary import AmountsByTaxType, yearlyTaxSummaryFromTransactions
+from ..taxSummary import AmountsByTaxType, yearlyTaxSummaryFromTransactions
 from ..process import GroupedProcess, Process, TaxRedistributionConfig, addTaxAdjustments, collectAndDistributeTax, funcProcess, funcProcessWrapper, groupedProcessWrapper, matching, satisfyAny
 from ..base import *
 
@@ -336,3 +336,9 @@ def processesReprojectingTaxFinalized(
         reprojectDependentTransferTaxSaving,
         reprojectRentTaxSaving
     ]
+
+
+# Tax processes to include in the main pipeline. Populate this list with
+# calls to the factory functions above (e.g. reprojectEstimatedTaxToBeCharged,
+# processesReprojectingTaxFinalized) configured for your specific tax years.
+processes: List[Process] = []

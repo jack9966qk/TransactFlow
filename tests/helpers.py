@@ -3,9 +3,9 @@ from inspect import getframeinfo
 from itertools import zip_longest
 import os
 from typing import Generator
-from base import *
-from analysis import accountBalanceByAccount, netWorth, totalAccountBalance, totalSaving
-from multiCurrency import totalAdjustedAmountAsJPY, totalRawAmountAsJPY
+from transactflow.base import *
+from transactflow.analysis import accountBalanceByAccount, netWorth, totalAccountBalance, totalSaving
+from transactflow.multiCurrency import totalAdjustedAmountAsJPY, totalRawAmountAsJPY
 import re
 import subprocess
 from dataclasses import fields

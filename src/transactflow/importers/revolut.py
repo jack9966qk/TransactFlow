@@ -1,5 +1,5 @@
-from base import INTERNAL_TRANSFER, REVOLUT, EXPENSE, INCOME, JPY, SOURCE_CUTOFF, UNPAIRED_INTERNAL_TRANSFER, MoneyAmount, Transaction, synthesizedTransaction
-from importers.importer import CsvImporter, addingCutoffTransactionTo, readDateOfTimestampFile
+from ..base import INTERNAL_TRANSFER, REVOLUT, EXPENSE, INCOME, JPY, SOURCE_CUTOFF, UNPAIRED_INTERNAL_TRANSFER, MoneyAmount, Transaction, synthesizedTransaction
+from .importer import CsvImporter, addingCutoffTransactionTo, readDateOfTimestampFile
 from dateutil.parser import parse as parseDate
 from typing import Dict, List, Optional, TextIO, cast
 

@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 from typing import Optional, Tuple
-from base import Date
+from ..base import Date
 
 @dataclass(frozen=True)
 class PayslipAnnotationItem:

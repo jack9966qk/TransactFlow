@@ -1,6 +1,6 @@
 import csv
 from datetime import datetime
-from retrieval.common import writeLocalTimeString
+from .common import writeLocalTimeString
 import xlrd
 import openpyxl
 import openpyxl.worksheet.worksheet

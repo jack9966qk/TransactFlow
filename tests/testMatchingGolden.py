@@ -1,6 +1,6 @@
-from base import *
-from test.helpers import assertFilesContentEqual, writeTransactionsWithStat
-from processes.runAll import run
+from transactflow.base import *
+from tests.helpers import assertFilesContentEqual, writeTransactionsWithStat
+from transactflow.processes.runAll import run
 
 OUTPUT_DIR = "test/goldenOutput"
 GOLDEN_OUTPUT_PATH = f"{OUTPUT_DIR}/golden"

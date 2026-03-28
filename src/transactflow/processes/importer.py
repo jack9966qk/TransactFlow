@@ -215,3 +215,8 @@ def makeProcesses(
     )
 
     return GroupedProcess(label="Import", processes=list(processes))
+
+
+# Default importer process with no data sources configured.
+# Call makeProcesses() with your data paths to create a configured version.
+process = makeProcesses()

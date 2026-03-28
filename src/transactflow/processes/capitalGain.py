@@ -1,8 +1,8 @@
 from typing import Iterator, Generator
 
-from base import *
-from process import Process, funcProcess, groupedProcessWrapper, sortByDateAndMore
-from capitalGainCalculation import Activity, Vest, Sell, genCapitalGain
+from ..base import *
+from ..process import Process, funcProcess, groupedProcessWrapper, sortByDateAndMore
+from ..capitalGainCalculation import Activity, Vest, Sell, genCapitalGain
 
 @groupedProcessWrapper(atomic=False)
 def process() -> List[Process]:

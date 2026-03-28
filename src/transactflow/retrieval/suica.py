@@ -1,4 +1,4 @@
-from retrieval.common import prependWithAlignment, shiftCombinedForNewMerge, writeLocalTimeString
+from .common import prependWithAlignment, shiftCombinedForNewMerge, writeLocalTimeString
 import os
 
 SUICA_DATA_DIR = "./data/rawTransactions/suica"

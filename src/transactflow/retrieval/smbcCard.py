@@ -1,6 +1,6 @@
 import os
 
-from retrieval.common import writeLocalTimeString
+from .common import writeLocalTimeString
 
 SMBC_CREDIT_DATA_DIR = "./data/rawTransactions/smbc-card"
 SMBC_CREDIT_DATA_MONTHS_DIR = "./data/rawTransactions/smbc-card/months"

@@ -1,4 +1,4 @@
-from retrieval.common import LineWithContext, prependWithAlignment, shiftCombinedForNewMerge, writeLocalTimeString
+from .common import LineWithContext, prependWithAlignment, shiftCombinedForNewMerge, writeLocalTimeString
 import os
 
 PRESTIA_DATA_DIR = "./data/rawTransactions/prestia"

@@ -1,15 +1,15 @@
-from multiCurrency import MultiCurrencyAmount
-from test.helpers import writeTransactionsWithStat
-from base import *
-from process import *
-from analysis import totalAccountBalance
+from transactflow.multiCurrency import MultiCurrencyAmount
+from tests.helpers import writeTransactionsWithStat
+from transactflow.base import *
+from transactflow.process import *
+from transactflow.analysis import totalAccountBalance
 from typing import Callable
 from dataclasses import replace
-import processes.importer
-import processes.complex
-import processes.tax
-import processes.payslipIncome
-import processes.runAll
+import transactflow.processes.importer
+import transactflow.processes.complex
+import transactflow.processes.tax
+import transactflow.processes.payslipIncome
+import transactflow.processes.runAll
 
 PROCESS_OUTPUT_DIR = "test/processOutput"
 
@@ -42,16 +42,16 @@ def totalAccountBalanceUnchanged(context: InvariantContext) -> InvariantResult:
 
     def resultIfExempt() -> Optional[InvariantResult]:
         process = context.processPath[-1]
-        if isinstance(process, processes.importer.ImporterProcess):
+        if isinstance(process, transactflow.processes.importer.ImporterProcess):
             return exemptResult("Net total can change normally with loader process")
         if (
-            process == processes.payslipIncome.applyPayslipAnnotations and
-            delta == processes.payslipIncome.expectedTotalBalanceDelta()
+            process == transactflow.processes.payslipIncome.applyPayslipAnnotations and
+            delta == transactflow.processes.payslipIncome.expectedTotalBalanceDelta()
         ):
             return exemptResult(f"Delta matches expected amount: {deltaDescription}")
-        # if process == processes.tax.reprojectUnpaidLocalTaxTo2020:
+        # if process == transactflow.processes.tax.reprojectUnpaidLocalTaxTo2020:
         #     return exemptResult("Estimated unpaid tax natually affects total")
-        # if process == processes.tax.addRoughEstimationFor2021TaxPaidIn2022:
+        # if process == transactflow.processes.tax.addRoughEstimationFor2021TaxPaidIn2022:
         #     return exemptResult("Estimated unpaid tax natually affects total")
         return None
 
@@ -60,7 +60,7 @@ def totalAccountBalanceUnchanged(context: InvariantContext) -> InvariantResult:
     # if not satisfied: breakpoint()
 
     reason = None if satisfied else f"Unexpected delta: {deltaDescription}"
-    return InvariantResult(satisfied, reason)    
+    return InvariantResult(satisfied, reason)
 
 def printInvariantResults(invariantsWithResult: List[Tuple[InvariantFn,  InvariantResult]], process: Process):
     results = [r for _, r in invariantsWithResult]
@@ -95,5 +95,5 @@ def testGroupedProcess(groupedProcess: GroupedProcess,
         transactions = after
 
 if __name__ == "__main__":
-    allCombined = processes.runAll.allCombined(includeTaxProcesses=True)
+    allCombined = transactflow.processes.runAll.allCombined(includeTaxProcesses=True)
     testGroupedProcess(allCombined, [], [totalAccountBalanceUnchanged])
