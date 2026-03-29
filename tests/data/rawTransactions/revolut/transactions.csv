@@ -1,0 +1,4 @@
+Type,Product,Started Date,Completed Date,Description,Amount,Fee,Currency,State,Balance
+CARD_PAYMENT,Current,2025-01-08 12:30:00,2025-01-08 12:30:00,Amazon.co.jp,-4500,0,JPY,COMPLETED,95500
+TOPUP,Current,2025-01-05 10:00:00,2025-01-05 10:00:00,Bank Transfer,100000,0,JPY,COMPLETED,100000
+CARD_PAYMENT,Current,2025-02-14 18:45:00,2025-02-14 18:45:00,Starbucks,-680,0,JPY,COMPLETED,94820
