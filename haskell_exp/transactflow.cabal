@@ -1,0 +1,39 @@
+cabal-version: 3.0
+name:          transactflow
+version:       0.1.0.0
+synopsis:      Personal finance transaction processing and analysis
+license:       NONE
+
+common shared
+  default-language: GHC2021
+  default-extensions:
+    DuplicateRecordFields
+    OverloadedRecordDot
+    OverloadedStrings
+    StrictData
+  ghc-options: -Wall -Wno-name-shadowing
+
+library
+  import:          shared
+  hs-source-dirs:  src
+  exposed-modules:
+    TransactFlow.Base
+    TransactFlow.Process
+    TransactFlow.MultiCurrency
+  build-depends:
+    base        >= 4.17 && < 5,
+    containers  >= 0.6,
+    text        >= 2.0,
+    time        >= 1.12
+
+test-suite tests
+  import:          shared
+  type:            exitcode-stdio-1.0
+  hs-source-dirs:  test
+  main-is:         Main.hs
+  build-depends:
+    base,
+    transactflow,
+    containers,
+    text,
+    time

@@ -1,3 +1,7 @@
 *.egg-info/
 **/__pycache__/
 *.pyc
+
+# Haskell
+haskell_exp/dist/
+haskell_exp/dist-newstyle/
