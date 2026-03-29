@@ -1,3 +1,7 @@
+from dataclasses import dataclass
+from functools import reduce
+from typing import Iterable, Optional
+
 from .base import *
 from .rates import getOrRetrieveLatestRates
 

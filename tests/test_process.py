@@ -15,7 +15,7 @@ from transactflow.process import (
 )
 
 
-def testingTransaction(
+def makeTransaction(
     amount=1000, category=INCOME, account=SMBC_PRESTIA,
     description="Test", year=2025, month=1, day=15,
     relatedTo=EMPLOYER,
@@ -34,40 +34,40 @@ def testingTransaction(
 
 class TestMatching:
     def test_match_by_account(self):
-        t = testingTransaction(account=SMBC_PRESTIA)
+        t = makeTransaction(account=SMBC_PRESTIA)
         assert matching(account=SMBC_PRESTIA)(t)
         assert not matching(account="Other")(t)
 
     def test_match_by_year(self):
-        t = testingTransaction(year=2025)
+        t = makeTransaction(year=2025)
         assert matching(year=2025)(t)
         assert not matching(year=2024)(t)
 
     def test_match_by_desc_substr(self):
-        t = testingTransaction(description="Monthly Rent Payment")
+        t = makeTransaction(description="Monthly Rent Payment")
         assert matching(descSubstr="Rent")(t)
         assert not matching(descSubstr="Salary")(t)
 
     def test_match_by_amount_pos_neg(self):
-        t_pos = testingTransaction(amount=1000)
-        t_neg = testingTransaction(amount=-1000)
+        t_pos = makeTransaction(amount=1000)
+        t_neg = makeTransaction(amount=-1000)
         assert matching(amountPosNegIs="pos")(t_pos)
         assert matching(amountPosNegIs="neg")(t_neg)
 
     def test_match_by_exact_category(self):
-        t = testingTransaction(category=SALARY)
+        t = makeTransaction(category=SALARY)
         assert matching(exactCategory=SALARY)(t)
         assert not matching(exactCategory=EXPENSE)(t)
 
     def test_match_by_date_range(self):
-        t = testingTransaction(year=2025, month=2, day=15)
+        t = makeTransaction(year=2025, month=2, day=15)
         assert matching(dateFrom=date(2025, 1, 1), dateUntil=date(2025, 3, 1))(t)
         assert not matching(dateFrom=date(2025, 3, 1))(t)
 
 
 class TestSatisfyAllAny:
     def test_satisfy_all(self):
-        t = testingTransaction(amount=1000, account=SMBC_PRESTIA)
+        t = makeTransaction(amount=1000, account=SMBC_PRESTIA)
         combined = satisfyAll([
             matching(account=SMBC_PRESTIA),
             matching(amountPosNegIs="pos"),
@@ -75,7 +75,7 @@ class TestSatisfyAllAny:
         assert combined(t)
 
     def test_satisfy_any(self):
-        t = testingTransaction(account=SMBC_PRESTIA)
+        t = makeTransaction(account=SMBC_PRESTIA)
         combined = satisfyAny([
             matching(account="Other"),
             matching(account=SMBC_PRESTIA),
@@ -85,13 +85,13 @@ class TestSatisfyAllAny:
 
 class TestLabelIfMatch:
     def test_labels_category(self):
-        t = testingTransaction(category=INCOME)
+        t = makeTransaction(category=INCOME)
         process = labelIfMatch(EVERYTHING, category=SALARY)
         result = process([t])
         assert result[0].category == SALARY
 
     def test_labels_related_to(self):
-        t = testingTransaction()
+        t = makeTransaction()
         process = labelIfMatch(EVERYTHING, relatedTo="Bank")
         result = process([t])
         assert result[0].relatedTo == "Bank"
@@ -99,17 +99,17 @@ class TestLabelIfMatch:
 
 class TestTakeMatched:
     def test_take_matched(self):
-        t1 = testingTransaction(amount=1000)
-        t2 = testingTransaction(amount=-500)
-        t3 = testingTransaction(amount=2000)
+        t1 = makeTransaction(amount=1000)
+        t2 = makeTransaction(amount=-500)
+        t3 = makeTransaction(amount=2000)
         matched, remaining = takeMatched(
             [t1, t2, t3], matching(amountPosNegIs="pos"))
         assert len(matched) == 2
         assert len(remaining) == 1
 
     def test_take_first_match(self):
-        t1 = testingTransaction(amount=1000)
-        t2 = testingTransaction(amount=2000)
+        t1 = makeTransaction(amount=1000)
+        t2 = makeTransaction(amount=2000)
         first, remaining = takeFirstMatch(
             [t1, t2], matching(amountPosNegIs="pos"))
         assert first is not None
@@ -129,10 +129,10 @@ class TestGroupedProcess:
 
         @funcProcess("add_one")
         def add_extra(transactions):
-            return transactions + [testingTransaction(amount=999, description="Extra")]
+            return transactions + [makeTransaction(amount=999, description="Extra")]
 
         gp = GroupedProcess(label="Chain", processes=[add_extra, double_amounts])
-        result = gp([testingTransaction()])
+        result = gp([makeTransaction()])
         assert len(result) == 2
         assert result[0].adjustedAmount.quantity == 2000
         assert result[1].adjustedAmount.quantity == 1998
@@ -140,11 +140,11 @@ class TestGroupedProcess:
 
 class TestShoppingRelabelling:
     def test_daily_shopping(self):
-        t = testingTransaction(amount=-5000, category=SHOPPING)
+        t = makeTransaction(amount=-5000, category=SHOPPING)
         result = relabelShoppingAsDaily([t])
         assert result[0].category == DAILY_SHOPPING
 
     def test_major_shopping(self):
-        t = testingTransaction(amount=-15000, category=SHOPPING)
+        t = makeTransaction(amount=-15000, category=SHOPPING)
         result = relabelShoppingAsMajor([t])
         assert result[0].category == MAJOR_SHOPPING

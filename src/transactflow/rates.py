@@ -61,7 +61,7 @@ def getOrRetrieveLatestRates() -> RetrivedRates:
     targetDay = today if now.hour > 4 else today - timedelta(days=1)
     if rates is not None and rates.dateOfRetrieval == targetDay:
         return rates
-    tick = forceReadUserConfig().stockUnitTick
+    tick = forceReadUserConfig().stock.stockUnitTick
     rates = RetrivedRates(
         JPYCNYRate=currencyRate(JPY, CNY),
         USDJPYRate=currencyRate(USD, JPY),

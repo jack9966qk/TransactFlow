@@ -1,9 +1,6 @@
-from typing import Callable, List, Sequence
+from typing import Callable, List
 
-from ..importers.amazonGiftCard import (
-    AmazonPayAnnotation,
-    annotateAmazonGiftCardTransactions,
-)
+from ..importers.amazonGiftCard import annotateAmazonGiftCardTransactions
 from ..importers.amexJp import readAmexJpCsvFiles
 from ..importers.diners import readDinersCsvFiles
 from ..importers.jcb import readJcbCsvFiles
@@ -17,7 +14,8 @@ from ..importers.importer import addingCutoffTransactionTo
 
 
 from ..base import *
-from ..process import EVERYTHING, GroupedProcess, Process, labelIfMatch
+from ..process import EVERYTHING, LazyGroupedProcess, Process, labelIfMatch
+from ..userConfig import forceReadUserConfig
 
 
 class ImporterProcess(Process):
@@ -47,176 +45,108 @@ class ImporterProcess(Process):
         return sortedByDate(transactions + newTs)
 
 
-def makeProcesses(
-    prestiaCsvPath: Optional[str] = None,
-    smbcCardCsvDir: Optional[str] = None,
-    jcbCsvDir: Optional[str] = None,
-    dinersCsvDir: Optional[str] = None,
-    amexJpCsvDir: Optional[str] = None,
-    revolutCsvPath: Optional[str] = None,
-    sbiNetBankCsvPath: Optional[str] = None,
-    manualRecordCsvPath: Optional[str] = None,
-    morganStanleyEquityStatementPath: Optional[str] = None,
-    morganStanleyEquityUnvestedPath: Optional[str] = None,
-    morganStanleyWithdrawPath: Optional[str] = None,
-    usdJpyRateAtDate: Optional[Dict[Date, float]] = None,
-    amazonGiftCardTransactions: Optional[List[Transaction]] = None,
-    amazonGiftCardLastUpdateDate: Optional[Date] = None,
-    amazonPayAnnotations: Optional[List[AmazonPayAnnotation]] = None,
-    amazonPayAnnotationsLastUpdateDate: Optional[Date] = None,
-    kyashTransactions: Optional[List[Transaction]] = None,
-    kyashLastUpdateDate: Optional[Date] = None,
-) -> GroupedProcess:
-    processes: Sequence[Process] = (
-        (
-            []
-            if not prestiaCsvPath
-            else [
-                ImporterProcess(
-                    label="Import SMBC Prestia",
-                    account=SMBC_PRESTIA,
-                    readFromSource=lambda: readPrestiaCsv(prestiaCsvPath),
-                )
-            ]
-        )
-        + (
-            []
-            if not smbcCardCsvDir
-            else [
-                ImporterProcess(
-                    label="Import SMBC Credit Card",
-                    account=SMBC_CREDIT_CARD,
-                    readFromSource=lambda: concat(readSmbcCardCsvFiles()),
-                )
-            ]
-        )
-        + (
-            []
-            if not jcbCsvDir
-            else [
-                ImporterProcess(
-                    label="Import JCB Credit Card",
-                    account=JCB_CREDIT_CARD,
-                    readFromSource=lambda: concat(readJcbCsvFiles()),
-                ),
-            ]
-        )
-        + (
-            []
-            if not dinersCsvDir
-            else [
-                ImporterProcess(
-                    label="Import Diners",
-                    account=DINERS_CLUB,
-                    readFromSource=lambda: concat(readDinersCsvFiles()),
-                )
-            ]
-        )
-        + (
-            []
-            if not amexJpCsvDir
-            else [
-                ImporterProcess(
-                    label="Import AMEX JP",
-                    account=AMEX_JP,
-                    readFromSource=lambda: concat(readAmexJpCsvFiles()),
-                )
-            ]
-        )
-        + (
-            []
-            if not revolutCsvPath
-            else [
-                ImporterProcess(
-                    label="Import Revolut",
-                    account=REVOLUT,
-                    readFromSource=lambda: readRevolutCsv(revolutCsvPath),
-                )
-            ]
-        )
-        + (
-            []
-            if not sbiNetBankCsvPath
-            else [
-                ImporterProcess(
-                    label="Import SBI Net Bank",
-                    account=SBI_NET_BANK,
-                    readFromSource=lambda: readSBINetBankCSV(sbiNetBankCsvPath),
-                )
-            ]
-        )
-        + (
-            []
-            if not manualRecordCsvPath
-            else [
-                ImporterProcess(
-                    label="Import manual record",
-                    account=None,
-                    readFromSource=lambda: readManualRecordCsv(manualRecordCsvPath),
-                ),
-            ]
-        )
-        + (
-            []
-            if not (
-                morganStanleyEquityStatementPath
-                and morganStanleyEquityUnvestedPath
-                and morganStanleyWithdrawPath
-                and usdJpyRateAtDate
-            )
-            else [
-                ImporterProcess(
-                    label="Import Morgan Stanley",
-                    account=MORGAN_STANLEY,
-                    readFromSource=lambda: readMorganStanleyCsv(
-                        statementFilePath=morganStanleyEquityStatementPath,
-                        unvestedFilePath=morganStanleyEquityUnvestedPath,
-                        includeUnvested=True,
-                        withdrawReportFilePath=morganStanleyWithdrawPath,
-                        usdJpyRateAtDate=usdJpyRateAtDate
-                    ),
-                )
-            ]
-        )
-        + (
-            []
-            if not (
-                amazonGiftCardTransactions
-                and amazonGiftCardLastUpdateDate
-                and amazonPayAnnotations
-                and amazonPayAnnotationsLastUpdateDate
-            )
-            else [
-                ImporterProcess(
-                    label="Import Amazon Gift Card",
-                    account=AMAZON_GIFT_CARD,
-                    readFromSource=lambda: annotateAmazonGiftCardTransactions(
-                        transactions=amazonGiftCardTransactions,
-                        amazonGiftCardLastUpdateDate=amazonGiftCardLastUpdateDate,
-                        amazonPayAnnotations=amazonPayAnnotations,
-                        amazonPayAnnotationsLastUpdateDate=amazonPayAnnotationsLastUpdateDate,
-                    ),
-                ),
-            ]
-        )
-        + (
-            []
-            if not (kyashTransactions and kyashLastUpdateDate)
-            else [
-                ImporterProcess(
-                    label="Import Kyash",
-                    account=KYASH,
-                    readFromSource=lambda: addingCutoffTransactionTo(
-                        kyashTransactions, date=kyashLastUpdateDate, account=KYASH
-                    ),
-                ),
-            ]
-        )
-    )
+def _buildImporterProcesses() -> List[Process]:
+    config = forceReadUserConfig().importers
+    processes: List[Process] = []
 
-    return GroupedProcess(label="Import", processes=list(processes))
+    if (prestia := config.prestia) is not None:
+        processes.append(ImporterProcess(
+            label="Import SMBC Prestia",
+            account=SMBC_PRESTIA,
+            readFromSource=lambda p=prestia: readPrestiaCsv(
+                p.csvPath, p.timestampPath),
+        ))
+
+    if (smbcCard := config.smbcCard) is not None:
+        processes.append(ImporterProcess(
+            label="Import SMBC Credit Card",
+            account=SMBC_CREDIT_CARD,
+            readFromSource=lambda s=smbcCard: concat(readSmbcCardCsvFiles(
+                s.monthsDir, s.timestampPath)),
+        ))
+
+    if (jcb := config.jcb) is not None:
+        processes.append(ImporterProcess(
+            label="Import JCB Credit Card",
+            account=JCB_CREDIT_CARD,
+            readFromSource=lambda j=jcb: concat(readJcbCsvFiles(
+                j.monthsDir, j.timestampPath)),
+        ))
+
+    if (diners := config.diners) is not None:
+        processes.append(ImporterProcess(
+            label="Import Diners",
+            account=DINERS_CLUB,
+            readFromSource=lambda d=diners: concat(readDinersCsvFiles(
+                d.monthsDir, d.timestampPath)),
+        ))
+
+    if (amexJp := config.amexJp) is not None:
+        processes.append(ImporterProcess(
+            label="Import AMEX JP",
+            account=AMEX_JP,
+            readFromSource=lambda a=amexJp: concat(readAmexJpCsvFiles(
+                a.convertedDir, a.timestampPath)),
+        ))
+
+    if (revolut := config.revolut) is not None:
+        processes.append(ImporterProcess(
+            label="Import Revolut",
+            account=REVOLUT,
+            readFromSource=lambda r=revolut: readRevolutCsv(
+                r.csvPath, r.timestampPath),
+        ))
+
+    if (sbi := config.sbi) is not None:
+        processes.append(ImporterProcess(
+            label="Import SBI Net Bank",
+            account=SBI_NET_BANK,
+            readFromSource=lambda s=sbi: readSBINetBankCSV(
+                s.csvPath, s.timestampPath),
+        ))
+
+    if (manualRecord := config.manualRecord) is not None:
+        processes.append(ImporterProcess(
+            label="Import manual record",
+            account=None,
+            readFromSource=lambda m=manualRecord: readManualRecordCsv(m.csvPath),
+        ))
+
+    if (ms := config.morganStanley) is not None:
+        processes.append(ImporterProcess(
+            label="Import Morgan Stanley",
+            account=MORGAN_STANLEY,
+            readFromSource=lambda m=ms: readMorganStanleyCsv(
+                statementFilePath=m.equityStatementPath,
+                unvestedFilePath=m.equityUnvestedPath,
+                includeUnvested=True,
+                withdrawReportFilePath=m.withdrawPath,
+                usdJpyRateAtDate=m.usdJpyRateAtDate,
+            ),
+        ))
+
+    if (agc := config.amazonGiftCard) is not None:
+        processes.append(ImporterProcess(
+            label="Import Amazon Gift Card",
+            account=AMAZON_GIFT_CARD,
+            readFromSource=lambda a=agc: annotateAmazonGiftCardTransactions(
+                transactions=a.transactions,
+                amazonGiftCardLastUpdateDate=a.lastUpdateDate,
+                amazonPayAnnotations=a.payAnnotations,
+                amazonPayAnnotationsLastUpdateDate=a.payAnnotationsLastUpdateDate,
+            ),
+        ))
+
+    if (kyash := config.kyash) is not None:
+        processes.append(ImporterProcess(
+            label="Import Kyash",
+            account=KYASH,
+            readFromSource=lambda k=kyash: addingCutoffTransactionTo(
+                k.transactions, date=k.lastUpdateDate, account=KYASH,
+            ),
+        ))
+
+    return processes
 
 
-# Default importer process with no data sources configured.
-# Call makeProcesses() with your data paths to create a configured version.
-process = makeProcesses()
+process = LazyGroupedProcess(label="Import", buildProcesses=_buildImporterProcesses)

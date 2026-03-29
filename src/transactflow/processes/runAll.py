@@ -16,7 +16,7 @@ def allCombined(includeTaxProcesses: bool) -> GroupedProcess:
         transactflow.processes.capitalGain.process,
         transactflow.processes.forecast.process,
     ] + (
-        transactflow.processes.tax.processes if includeTaxProcesses else []
+        [transactflow.processes.tax.process] if includeTaxProcesses else []
     ) + [
         sortByDateAndMore,
         moveSalaryToFirstOfDay

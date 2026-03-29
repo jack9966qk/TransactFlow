@@ -1,13 +1,46 @@
 import unicodedata
 import re
 from collections import defaultdict
+from dataclasses import dataclass
 from .base import *
-from typing import Dict, Generator, Iterator, List, Literal, Set, Tuple, Any, Callable, Iterable
+from typing import Dict, Generator, Iterator, List, Literal, Optional, Set, Tuple, Any, Callable, Iterable
 from dateutil.parser import parse as parseDate
 from abc import ABC, abstractmethod
 from tqdm import tqdm
 
 from .multiCurrency import totalAdjustedAmountAsJPY
+
+__all__ = [
+    # Type aliases
+    "ProcessFn", "MatchFn", "MapFn",
+    "MatchFnMaker", "ProcessFnMaker", "ProcessListMaker",
+
+    # Matching
+    "Matching", "LabelledFunctionalMatching",
+    "funcMatching", "argsDesc", "matching", "funcMatchingWrapper",
+    "satisfyAll", "satisfyAny",
+    "EVERYTHING", "isSalary", "isDailyShopping", "isMajorShopping",
+
+    # Mapping
+    "Mapping", "LabelledFunctionalMapping",
+    "funcMapping", "writeCatIf",
+
+    # Process
+    "Process", "FunctionProcess", "GroupedProcess", "LazyGroupedProcess",
+    "ReplacementProcess",
+    "breakpointProcess", "funcProcess", "funcProcessWrapper", "groupedProcessWrapper",
+    "filterProc", "mapProc",
+    "labelIfMatch", "labelAll",
+    "labelSalaryIncome",
+    "labelNotReallyIncomeIfUncategorizedIncome", "labelGeneralExpenseDestination",
+    "relabelShoppingAsDaily", "relabelShoppingAsMajor",
+    "takeMatched", "takeFirstMatch",
+    "splitTransactionFee",
+    "applyRefundOrReimbursement", "labelAndApplyRefundOrReimbursement",
+    "monthlySynthesizedTransactionsToAdd",
+    "addTaxAdjustments", "TaxRedistributionConfig", "collectAndDistributeTax",
+    "sortByDate", "sortByDateAndMore", "moveSalaryToFirstOfDay",
+]
 
 # ProcessFn :: [Transaction] -> [Transaction]
 ProcessFn = Callable[[List[Transaction]], List[Transaction]]
@@ -180,6 +213,36 @@ class GroupedProcess(Process):
     def printTree(self):
         for path in self.iterateDescedants(leafOnly=False, expandAtomic=False):
             print("    " * (len(path) - 1) + path[-1].label)
+
+class LazyGroupedProcess(GroupedProcess):
+    """A GroupedProcess that defers process list construction to first use.
+
+    Needed because module-level process variables are evaluated at import time,
+    but UserConfig is set later via setUserConfig().
+
+    Uses a property for `processes` so that resolution is triggered even when a
+    parent GroupedProcess accesses `.processes` directly during iteration.
+    """
+    _buildProcesses: Callable[[], List["Process"]]
+    _resolved: bool
+    _processes_list: List["Process"]
+
+    def __init__(self, label: str, buildProcesses: Callable[[], List["Process"]], atomic: bool = False):
+        super().__init__(label=label, atomic=atomic, processes=[])
+        self._buildProcesses = buildProcesses
+        self._resolved = False
+
+    @property  # type: ignore[override]
+    def processes(self) -> List["Process"]:
+        if not self._resolved:
+            self._processes_list = self._buildProcesses()
+            self._resolved = True
+        return self._processes_list
+
+    @processes.setter
+    def processes(self, value: List["Process"]):
+        self._processes_list = value
+
 
 def breakpointProcess(*args) -> Process:
     @funcProcess(f"Breakpoint")

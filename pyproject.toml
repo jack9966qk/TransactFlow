@@ -29,6 +29,9 @@ dependencies = [
 [tool.setuptools.packages.find]
 where = ["src"]
 
+[tool.pytest.ini_options]
+python_files = "test_*.py"
+
 [dependency-groups]
 dev = [
     "pytest>=9.0.2",

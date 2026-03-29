@@ -1,5 +1,5 @@
 from transactflow.multiCurrency import MultiCurrencyAmount
-from tests.helpers import writeTransactionsWithStat
+from .helpers import writeTransactionsWithStat
 from transactflow.base import *
 from transactflow.process import *
 from transactflow.analysis import totalAccountBalance

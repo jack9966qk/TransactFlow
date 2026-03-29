@@ -3,9 +3,7 @@ from .importer import CsvImporter, addingCutoffTransactionTo, readDateOfTimestam
 from dateutil.parser import parse as parseDate
 from typing import Dict, List, Optional, TextIO, cast
 
-REVOLUT_DATA_TIMESTAMP_PATH = "./data/rawTransactions/revolut/last_update_time"
-
-def readRevolutCsv(filename: str) -> List[Transaction]:
+def readRevolutCsv(filename: str, timestampPath: str) -> List[Transaction]:
     def parseRevolutLine(row: Dict[str, str], raw: str, lineNum: int) -> Optional[Transaction]:
         amount = float(row["Amount"])
         date = parseDate(row["Started Date"]).date()
@@ -27,5 +25,5 @@ def readRevolutCsv(filename: str) -> List[Transaction]:
         transactions = importer.parseFile(cast(TextIO, f))
     return addingCutoffTransactionTo(
         transactions,
-        date=readDateOfTimestampFile(REVOLUT_DATA_TIMESTAMP_PATH),
+        date=readDateOfTimestampFile(timestampPath),
         account=REVOLUT)

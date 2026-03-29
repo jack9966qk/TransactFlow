@@ -4,9 +4,7 @@ from .importer import CsvImporter, addingCutoffTransactionTo, readDateOfTimestam
 from dateutil.parser import parse as parseDate
 from typing import List, Optional, Tuple, TextIO, cast
 
-SBI_DATA_TIMESTAMP_PATH = "./data/rawTransactions/sbi/last_update_time"
-
-def readSBINetBankCSV(filename: str) -> List[Transaction]:
+def readSBINetBankCSV(filename: str, timestampPath: str) -> List[Transaction]:
     def readNumOfLines() -> int:
         counter = 0
         with open(filename, "r", encoding="shift_jis") as f:
@@ -34,5 +32,5 @@ def readSBINetBankCSV(filename: str) -> List[Transaction]:
         transactions = importer.parseFile(cast(TextIO, f))
     return addingCutoffTransactionTo(
         transactions,
-        date=readDateOfTimestampFile(SBI_DATA_TIMESTAMP_PATH),
+        date=readDateOfTimestampFile(timestampPath),
         account=SBI_NET_BANK)

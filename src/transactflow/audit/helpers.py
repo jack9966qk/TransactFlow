@@ -1,12 +1,10 @@
 from collections import Counter
-from inspect import getframeinfo
 from itertools import zip_longest
-import os
-from typing import Generator
+from pathlib import Path
+from typing import Generator, List, Optional
 from transactflow.base import *
 from transactflow.analysis import accountBalanceByAccount, netWorth, totalAccountBalance, totalSaving
-from transactflow.multiCurrency import totalAdjustedAmountAsJPY, totalRawAmountAsJPY
-import re
+from transactflow.multiCurrency import totalAdjustedAmountAsJPY
 import subprocess
 from dataclasses import fields
 
@@ -18,7 +16,7 @@ def filesContentEqual(path1, path2, encoding="utf-8"):
                 if l1 != l2: return False
     return True
 
-def assertFilesContentEqual(path1, path2):
+def assertFilesContentEqual(path1: Path, path2: Path):
     if not filesContentEqual(path1, path2):
         print(f"Files {path1} and {path2} do not match")
         subprocess.run(["code", "--diff", path1, path2])
@@ -90,7 +88,7 @@ def transactionTestingStats(transactions: List[Transaction]) -> Generator[str, N
         yield f"{prefix} {cat.label}: {adjustedTotalOf(cat, isForecast=True)}"
     yield ""
 
-def writeTransactionsWithStat(transactions: List[Transaction], path: str, pretty: bool = False):
+def writeTransactionsWithStat(transactions: List[Transaction], path: Path, pretty: bool = False):
     with open(path, "w", encoding="utf-8") as f:
         f.writelines(line + "\n" for line in transactionTestingStats(transactions))
         f.writelines("\n" + transactionRepr(t, pretty=pretty) + "\n" for t in transactions)

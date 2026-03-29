@@ -2,7 +2,6 @@
 
 import os
 import pytest
-from unittest.mock import patch
 from datetime import date
 
 from transactflow.base import (
@@ -23,8 +22,7 @@ class TestPrestiaImporter:
         csv_path = os.path.join(TEST_DATA_DIR, "rawTransactions", "prestia", "combined.csv")
         timestamp_path = os.path.join(TEST_DATA_DIR, "rawTransactions", "prestia", "last_update_time")
 
-        with patch("transactflow.importers.prestia.PRESTIA_DATA_TIMESTAMP_PATH", timestamp_path):
-            transactions = readPrestiaCsv(csv_path)
+        transactions = readPrestiaCsv(csv_path, timestamp_path)
 
         # 9 data rows + 1 cutoff transaction
         assert len(transactions) == 10
@@ -48,8 +46,7 @@ class TestPrestiaImporter:
         csv_path = os.path.join(TEST_DATA_DIR, "rawTransactions", "prestia", "combined.csv")
         timestamp_path = os.path.join(TEST_DATA_DIR, "rawTransactions", "prestia", "last_update_time")
 
-        with patch("transactflow.importers.prestia.PRESTIA_DATA_TIMESTAMP_PATH", timestamp_path):
-            transactions = readPrestiaCsv(csv_path)
+        transactions = readPrestiaCsv(csv_path, timestamp_path)
 
         dates = sorted(set(t.date for t in transactions if t.description != "SMBC Prestia data source cutoff"))
         assert dates[0] == date(2025, 1, 15)
@@ -63,8 +60,7 @@ class TestSBIImporter:
         csv_path = os.path.join(TEST_DATA_DIR, "rawTransactions", "sbi", "transactions.csv")
         timestamp_path = os.path.join(TEST_DATA_DIR, "rawTransactions", "sbi", "last_update_time")
 
-        with patch("transactflow.importers.sbi.SBI_DATA_TIMESTAMP_PATH", timestamp_path):
-            transactions = readSBINetBankCSV(csv_path)
+        transactions = readSBINetBankCSV(csv_path, timestamp_path)
 
         # 6 data rows + 1 cutoff
         assert len(transactions) == 7
@@ -87,8 +83,7 @@ class TestRevolutImporter:
         csv_path = os.path.join(TEST_DATA_DIR, "rawTransactions", "revolut", "transactions.csv")
         timestamp_path = os.path.join(TEST_DATA_DIR, "rawTransactions", "revolut", "last_update_time")
 
-        with patch("transactflow.importers.revolut.REVOLUT_DATA_TIMESTAMP_PATH", timestamp_path):
-            transactions = readRevolutCsv(csv_path)
+        transactions = readRevolutCsv(csv_path, timestamp_path)
 
         # 3 data rows + 1 cutoff
         assert len(transactions) == 4
@@ -122,27 +117,3 @@ class TestManualRecordImporter:
         for t in transactions:
             assert t.account == CASH
             assert t.relatedTo == GENERAL_EXPENSE_DESTINATION
-
-
-class TestImporterProcess:
-    def test_make_processes_no_sources(self):
-        """makeProcesses with no sources should create an empty import group."""
-        from transactflow.processes.importer import makeProcesses
-
-        process = makeProcesses()
-        result = process([])
-        assert result == []
-
-    def test_make_processes_with_prestia(self):
-        """makeProcesses with prestia path should import those transactions."""
-        from transactflow.processes.importer import makeProcesses
-
-        csv_path = os.path.join(TEST_DATA_DIR, "rawTransactions", "prestia", "combined.csv")
-        timestamp_path = os.path.join(TEST_DATA_DIR, "rawTransactions", "prestia", "last_update_time")
-
-        with patch("transactflow.importers.prestia.PRESTIA_DATA_TIMESTAMP_PATH", timestamp_path):
-            process = makeProcesses(prestiaCsvPath=csv_path)
-            result = process([])
-
-        assert len(result) > 0
-        assert all(t.account == SMBC_PRESTIA for t in result)

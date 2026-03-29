@@ -1,31 +1,26 @@
 from typing import List
 from ..base import Transaction
 from ..process import (
-    GroupedProcess,
+    LazyGroupedProcess,
     Process,
-    funcProcess,
-    groupedProcessWrapper,
-    labelIfMatch,
     labelGeneralExpenseDestination,
     labelNotReallyIncomeIfUncategorizedIncome,
-    labelSalaryIncome,
-    matching,
-    relabelShoppingAsDaily,
-    relabelShoppingAsMajor,
 )
+from ..userConfig import forceReadUserConfig
 
 """
 Simple categorization processes.
+
+Built-in rules (labelGeneralExpenseDestination, labelNotReallyIncomeIfUncategorizedIncome)
+are always applied. User-supplied simpleProcesses from ProcessConfig are appended after.
 """
 
 
-@groupedProcessWrapper(atomic=False)
-def process() -> List[Process]:
+def _buildSimpleProcesses() -> List[Process]:
+    userSupplied = forceReadUserConfig().processes.simpleProcess
     return [
-        # labelSalaryIncome requires relatedTo=EMPLOYER to be set by user-specific rules.
-        # Add it back once you have employer labelling configured.
         labelGeneralExpenseDestination,
         labelNotReallyIncomeIfUncategorizedIncome,
-        # relabelShoppingAsDaily and relabelShoppingAsMajor require SHOPPING category
-        # transactions, which come from user-specific rules. Add them back once configured.
-    ]
+    ] + ([] if userSupplied is None else [userSupplied])
+
+process = LazyGroupedProcess(label="Simple categorization", buildProcesses=_buildSimpleProcesses)

@@ -1,4 +1,4 @@
-from tests.helpers import assertFilesContentEqual
+from .helpers import assertFilesContentEqual
 from transactflow.base import *
 from transactflow.retrieval.prestia import mergePrestiaFiles
 from transactflow.retrieval.common import InconsistentLinesError, CannotFindAlignmentError

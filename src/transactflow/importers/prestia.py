@@ -5,9 +5,9 @@ from dateutil.parser import parse as parseDate
 from typing import List, Optional, Tuple
 
 from ..process import sortByDateAndMore
-from ..retrieval.prestia import PRESTIA_DATA_TIMESTAMP_PATH
 
-def readPrestiaCsv(filename: str) -> List[Transaction]:
+
+def readPrestiaCsv(filename: str, timestampPath: str) -> List[Transaction]:
     def readNumOfLines() -> int:
         counter = 0
         with open(filename, "r", encoding="shift_jis") as f:
@@ -38,5 +38,5 @@ def readPrestiaCsv(filename: str) -> List[Transaction]:
         transactions = importer.parseFile(f)
     return addingCutoffTransactionTo(
         transactions,
-        date=readDateOfTimestampFile(PRESTIA_DATA_TIMESTAMP_PATH),
+        date=readDateOfTimestampFile(timestampPath),
         account=SMBC_PRESTIA)

@@ -5,12 +5,11 @@ from .importer import CsvImporter, addingCutoffTransactionTo, readDateOfTimestam
 from dateutil.parser import parse as parseDate
 from typing import List, Optional, TextIO, cast
 
-from ..retrieval.amexJp import AMEX_DATA_CONVERTED_DIR, AMEX_DATA_TIMESTAMP_PATH
 from ..retrieval.common import forEachFileToReadFrom
 
-def readAmexJpCsvFiles() -> List[List[Transaction]]:
+def readAmexJpCsvFiles(convertedDir: str, timestampPath: str) -> List[List[Transaction]]:
     transactionGroups: List[List[Transaction]] = []
-    readFromDir = AMEX_DATA_CONVERTED_DIR
+    readFromDir = convertedDir
     def addTransactionsToGroup(fileName: str, incomplete: bool):
         readFromPath = os.path.join(readFromDir, fileName)
         transactionGroups.append(readAmexJpCsv(readFromPath))
@@ -25,7 +24,7 @@ def readAmexJpCsvFiles() -> List[List[Transaction]]:
     transactionGroups.append(
         addingCutoffTransactionTo(
             [],
-            date=readDateOfTimestampFile(AMEX_DATA_TIMESTAMP_PATH),
+            date=readDateOfTimestampFile(timestampPath),
             account=AMEX_JP)
     )
     return transactionGroups

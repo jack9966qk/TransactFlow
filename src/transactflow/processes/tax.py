@@ -1,7 +1,8 @@
 from asyncio import threads
 from typing import List
 from ..taxSummary import AmountsByTaxType, yearlyTaxSummaryFromTransactions
-from ..process import GroupedProcess, Process, TaxRedistributionConfig, addTaxAdjustments, collectAndDistributeTax, funcProcess, funcProcessWrapper, groupedProcessWrapper, matching, satisfyAny
+from ..process import GroupedProcess, LazyGroupedProcess, Process, TaxRedistributionConfig, addTaxAdjustments, collectAndDistributeTax, funcProcess, funcProcessWrapper, matching, satisfyAny
+from ..userConfig import forceReadUserConfig
 from ..base import *
 
 """
@@ -338,7 +339,9 @@ def processesReprojectingTaxFinalized(
     ]
 
 
-# Tax processes to include in the main pipeline. Populate this list with
-# calls to the factory functions above (e.g. reprojectEstimatedTaxToBeCharged,
-# processesReprojectingTaxFinalized) configured for your specific tax years.
-processes: List[Process] = []
+def _buildTaxProcesses() -> List[Process]:
+    userSupplied = forceReadUserConfig().processes.taxProcess
+    return [] if userSupplied is None else [userSupplied]
+
+
+process = LazyGroupedProcess(label="Tax reprojection", buildProcesses=_buildTaxProcesses)

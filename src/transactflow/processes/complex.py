@@ -1,11 +1,9 @@
-
 from typing import List
-from ..base import Transaction
 from ..process import (
-    GroupedProcess,
+    LazyGroupedProcess,
     Process,
-    groupedProcessWrapper,
 )
+from ..userConfig import forceReadUserConfig
 
 """
 Complex categorization processes.
@@ -16,9 +14,14 @@ rules that go beyond simple matching such as:
 - Internal transfer pairing (labelIfMatch with relatedTo)
 - Fee splitting (splitTransactionFee)
 - Refund/reimbursement application (applyRefundOrReimbursement)
+
+All processes are user-supplied via ProcessConfig.complexProcesses.
 """
 
 
-@groupedProcessWrapper(atomic=False)
-def process() -> List[Process]:
-    return []
+def _buildComplexProcesses() -> List[Process]:
+    userSupplied = forceReadUserConfig().processes.complexProcess
+    return [] if userSupplied is None else [userSupplied]
+
+
+process = LazyGroupedProcess(label="Complex categorization", buildProcesses=_buildComplexProcesses)

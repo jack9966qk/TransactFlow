@@ -8,14 +8,12 @@ from typing import List, Optional, TextIO, cast, Tuple
 from datetime import timedelta
 import re
 
-JCB_DATA_MONTHS_DIR = "./data/rawTransactions/jcb/months"
-JCB_DATA_TIMESTAMP_PATH = "./data/rawTransactions/jcb/last_update_time"
 JCB_EXPECTED_AUTOMATIC_REPAYMENT_DESCRIPTION = "Synthesized expected repayment for JCB"
 JCB_EXPECTED_MANUAL_REPAYMENT_DESCRIPTION = "Synthesized expected manual repayment for JCB"
 
-def readJcbCsvFiles() -> List[List[Transaction]]:
+def readJcbCsvFiles(monthsDir: str, timestampPath: str) -> List[List[Transaction]]:
     transactionGroups: List[List[Transaction]] = []
-    readFromDir = JCB_DATA_MONTHS_DIR
+    readFromDir = monthsDir
     def addTransactionsToGroup(fileName: str, incomplete: bool):
         readFromPath = os.path.join(readFromDir, fileName)
         transactionGroups.append(readJcbCsv(readFromPath))
@@ -30,7 +28,7 @@ def readJcbCsvFiles() -> List[List[Transaction]]:
     transactionGroups.append(
         addingCutoffTransactionTo(
             [],
-            date=readDateOfTimestampFile(JCB_DATA_TIMESTAMP_PATH),
+            date=readDateOfTimestampFile(timestampPath),
             account=JCB_CREDIT_CARD)
     )
     return transactionGroups

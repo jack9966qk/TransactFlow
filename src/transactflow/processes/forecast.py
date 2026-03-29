@@ -3,7 +3,8 @@ from ..base import *
 from datetime import timedelta
 from itertools import product
 from ..multiCurrency import totalAdjustedAmountAsJPY
-from ..process import Process, funcProcess, sortByDateAndMore, groupedProcessWrapper
+from ..process import Process, funcProcess, sortByDateAndMore, LazyGroupedProcess
+from ..userConfig import forceReadUserConfig
 
 def forecastMonthlyTransactions(
     targetYear: int
@@ -116,8 +117,10 @@ def forecastMonthlyTransactions(
         )
     return addMonthlyTransactions
 
-@groupedProcessWrapper(atomic=False)
-def process() -> List[Process]:
-    return [
-        forecastMonthlyTransactions(targetYear=2025)
-    ]
+
+def _buildForecastProcesses() -> List[Process]:
+    targetYear = forceReadUserConfig().forecast.targetYear
+    return [forecastMonthlyTransactions(targetYear=targetYear)]
+
+
+process = LazyGroupedProcess(label="Forecast", buildProcesses=_buildForecastProcesses)

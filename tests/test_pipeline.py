@@ -2,7 +2,6 @@
 
 import os
 from datetime import date
-from unittest.mock import patch
 
 from transactflow.base import (
     EXPENSE, INCOME, SALARY, SMBC_PRESTIA, REVOLUT,
@@ -10,33 +9,52 @@ from transactflow.base import (
     GENERAL_EXPENSE_DESTINATION,
 )
 from transactflow.process import GroupedProcess
-from transactflow.processes.importer import makeProcesses
-from transactflow.processes.simple import process as simple_process
-from transactflow.processes.complex import process as complex_process
+from transactflow.processes.importer import ImporterProcess
+from transactflow.userConfig import (
+    ImporterConfig, PrestiaPaths, RevolutPaths, StockConfig, ProcessConfig,
+    ForecastConfig, UserConfig, setUserConfig,
+)
+from transactflow.importers.prestia import readPrestiaCsv
+from transactflow.importers.revolut import readRevolutCsv
 
 TESTS_DIR = os.path.dirname(os.path.abspath(__file__))
 TEST_DATA_DIR = os.path.join(TESTS_DIR, "data")
 
 
+def _prestia_timestamp_path():
+    return os.path.join(TEST_DATA_DIR, "rawTransactions", "prestia", "last_update_time")
+
+
+def _revolut_timestamp_path():
+    return os.path.join(TEST_DATA_DIR, "rawTransactions", "revolut", "last_update_time")
+
+
+def _dummy_stock_config():
+    return StockConfig(
+        stockUnitTick="DUMMY",
+        morganStanleyCsvHeaderNumUnits="Quantity",
+        morganStanleyVestedParsingShouldIgnore=lambda r, s, n: False,
+        morganStanleyUnvestedParsingShouldIgnore=lambda r, s, n: False,
+        morganStanleyWithdrawParsingShouldIgnore=lambda r, s, n: False,
+        morganStanleyWithdrawTransform=lambda y, u, p: (u, p, ""),
+    )
+
+
 class TestPipelineWithMockData:
-    def _prestia_timestamp_path(self):
-        return os.path.join(TEST_DATA_DIR, "rawTransactions", "prestia", "last_update_time")
-
-    def _revolut_timestamp_path(self):
-        return os.path.join(TEST_DATA_DIR, "rawTransactions", "revolut", "last_update_time")
-
     def test_import_only(self):
         """Test that the import step loads transactions from mock CSV."""
         csv_path = os.path.join(TEST_DATA_DIR, "rawTransactions", "prestia", "combined.csv")
+        ts_path = _prestia_timestamp_path()
 
-        with patch("transactflow.importers.prestia.PRESTIA_DATA_TIMESTAMP_PATH",
-                   self._prestia_timestamp_path()):
-            importer = makeProcesses(prestiaCsvPath=csv_path)
-            transactions = importer([])
+        importer = ImporterProcess(
+            label="Import SMBC Prestia",
+            account=SMBC_PRESTIA,
+            readFromSource=lambda: readPrestiaCsv(csv_path, ts_path),
+        )
+        transactions = importer([])
 
         assert len(transactions) > 0
         assert all(t.account == SMBC_PRESTIA for t in transactions)
-        # Transactions should be sorted by date
         dates = [t.date for t in transactions]
         assert dates == sorted(dates)
 
@@ -48,17 +66,33 @@ class TestPipelineWithMockData:
         data, income transactions without relatedTo=EMPLOYER become NOT_REALLY_INCOME.
         """
         csv_path = os.path.join(TEST_DATA_DIR, "rawTransactions", "prestia", "combined.csv")
+        ts_path = _prestia_timestamp_path()
 
-        with patch("transactflow.importers.prestia.PRESTIA_DATA_TIMESTAMP_PATH",
-                   self._prestia_timestamp_path()):
-            pipeline = GroupedProcess(label="Test pipeline", processes=[
-                makeProcesses(prestiaCsvPath=csv_path),
-                simple_process,
-            ])
-            transactions = pipeline([])
+        setUserConfig(UserConfig(
+            stock=_dummy_stock_config(),
+            importers=ImporterConfig(
+                prestia=PrestiaPaths(csvPath=csv_path, timestampPath=ts_path),
+            ),
+            processes=ProcessConfig(),
+            forecast=ForecastConfig(targetYear=2025),
+        ))
+
+        from transactflow.processes.simple import process as simple_process
+        # Force re-resolve since config changed
+        simple_process._resolved = False
+
+        importer = ImporterProcess(
+            label="Import SMBC Prestia",
+            account=SMBC_PRESTIA,
+            readFromSource=lambda: readPrestiaCsv(csv_path, ts_path),
+        )
+        pipeline = GroupedProcess(label="Test pipeline", processes=[
+            importer,
+            simple_process,
+        ])
+        transactions = pipeline([])
 
         assert len(transactions) > 0
-        # Verify the simple process ran and categorized expense destinations
         expenses_with_dest = [
             t for t in transactions
             if t.relatedTo == GENERAL_EXPENSE_DESTINATION
@@ -67,34 +101,49 @@ class TestPipelineWithMockData:
 
     def test_import_multiple_sources(self):
         """Test importing from multiple sources at once."""
-        prestia_path = os.path.join(TEST_DATA_DIR, "rawTransactions", "prestia", "combined.csv")
-        revolut_path = os.path.join(TEST_DATA_DIR, "rawTransactions", "revolut", "transactions.csv")
+        prestia_csv = os.path.join(TEST_DATA_DIR, "rawTransactions", "prestia", "combined.csv")
+        prestia_ts = _prestia_timestamp_path()
+        revolut_csv = os.path.join(TEST_DATA_DIR, "rawTransactions", "revolut", "transactions.csv")
+        revolut_ts = _revolut_timestamp_path()
 
-        with (
-            patch("transactflow.importers.prestia.PRESTIA_DATA_TIMESTAMP_PATH",
-                  self._prestia_timestamp_path()),
-            patch("transactflow.importers.revolut.REVOLUT_DATA_TIMESTAMP_PATH",
-                  self._revolut_timestamp_path()),
-        ):
-            importer = makeProcesses(
-                prestiaCsvPath=prestia_path,
-                revolutCsvPath=revolut_path,
-            )
-            transactions = importer([])
+        importers = GroupedProcess(label="Import", processes=[
+            ImporterProcess(
+                label="Import SMBC Prestia",
+                account=SMBC_PRESTIA,
+                readFromSource=lambda: readPrestiaCsv(prestia_csv, prestia_ts),
+            ),
+            ImporterProcess(
+                label="Import Revolut",
+                account=REVOLUT,
+                readFromSource=lambda: readRevolutCsv(revolut_csv, revolut_ts),
+            ),
+        ])
+        transactions = importers([])
 
         accounts = set(t.account for t in transactions)
         assert SMBC_PRESTIA in accounts
         assert REVOLUT in accounts
 
     def test_full_pipeline_no_data(self):
-        """Full pipeline with no data sources produces empty import results."""
-        importer = makeProcesses()
+        """Full pipeline with no data sources produces empty results from an empty importer."""
+        importer = GroupedProcess(label="Import", processes=[])
         result = importer([])
         assert result == []
 
     def test_complex_process_passthrough(self):
         """Complex process with no rules configured should pass through."""
         from transactflow.base import synthesizedTransaction
+
+        setUserConfig(UserConfig(
+            stock=_dummy_stock_config(),
+            importers=ImporterConfig(),
+            processes=ProcessConfig(),
+            forecast=ForecastConfig(targetYear=2025),
+        ))
+
+        from transactflow.processes.complex import process as complex_process
+        complex_process._resolved = False
+
         t = synthesizedTransaction(
             date=date(2025, 1, 1), description="Test",
             amount=MoneyAmount(JPY, -1000), category=EXPENSE, account=SMBC_PRESTIA,

@@ -27,7 +27,7 @@ class VestedEquityItem:
         return VestedEquityItem(
             grantDate=parseDate(row["Award Date"]).date(),
             vestingDate=parseDate(row["Vesting Date"]).date(),
-            numUnits=float(row[forceReadUserConfig().morganStanleyCsvHeaderNumUnits]),
+            numUnits=float(row[forceReadUserConfig().stock.morganStanleyCsvHeaderNumUnits]),
             grant=row["Award Number"],
             vestedUSDPerShare=float(row["Fair Market Value"].lstrip("$")),
             vestedUSDJPYRate=usdJpyRate())
@@ -65,9 +65,9 @@ class WithdrawItem:
 
 def parseVested(statementFilePath: str) -> List[Transaction]:
     def skipStatementLine(raw: str) -> bool:
-        return forceReadUserConfig().morganStanleyUnvestedParsingShouldIgnore({}, raw, 0)
+        return forceReadUserConfig().stock.morganStanleyVestedParsingShouldIgnore({}, raw, 0)
     def parseVestedLine(row: dict, raw: str, lineNum: int) -> Optional[Transaction]:
-        if forceReadUserConfig().morganStanleyUnvestedParsingShouldIgnore(row, raw, lineNum):
+        if forceReadUserConfig().stock.morganStanleyVestedParsingShouldIgnore(row, raw, lineNum):
             return None
         item = VestedEquityItem.fromCsvRow(row)
         description = f"Equity {item.numUnits} Units"
@@ -91,7 +91,7 @@ def parseVested(statementFilePath: str) -> List[Transaction]:
 
 def parseUnvested(unvestedFilePath: str) -> List[Transaction]:
     def skipUnvestedLine(raw: str) -> bool:
-        return forceReadUserConfig().morganStanleyUnvestedParsingShouldIgnore({}, raw, 0)
+        return forceReadUserConfig().stock.morganStanleyUnvestedParsingShouldIgnore({}, raw, 0)
     def parseUnvestedLine(row: dict, raw: str, lineNum: int) -> Optional[Transaction]:
         if raw.startswith('The numbers on this statement reflect'): return None
         item = UnvestedEquityItem.fromCsvRow(row)
@@ -116,16 +116,16 @@ def parseWithdraw(
     usdJpyRateAtDate: Dict[Date, float]
 ) -> List[Transaction]:
     def skipWithdrawLine(raw: str) -> bool:
-        return forceReadUserConfig().morganStanleyWithdrawParsingShouldIgnore({}, raw, 0)
+        return forceReadUserConfig().stock.morganStanleyWithdrawParsingShouldIgnore({}, raw, 0)
     # TODO: Replace this workaround with an updated CsvImporter that accepts multiple transactions
     # generated per line.
     gains: List[Transaction] = []
     def parseVestedLine(row: dict, raw: str, lineNum: int) -> Optional[Transaction]:
-        if forceReadUserConfig().morganStanleyWithdrawParsingShouldIgnore(row, raw, lineNum):
+        if forceReadUserConfig().stock.morganStanleyWithdrawParsingShouldIgnore(row, raw, lineNum):
             return None
         item = WithdrawItem.fromCsvRow(row)
         (numUnitsTransformed, usdPerShareTransformed, descriptionSuffix) = (
-            forceReadUserConfig().morganStanleyWithdrawTransform(
+            forceReadUserConfig().stock.morganStanleyWithdrawTransform(
                 item.date.year, item.numUnits, item.usdPerShare
             )
         )
