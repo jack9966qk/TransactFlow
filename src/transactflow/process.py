@@ -198,6 +198,7 @@ class GroupedProcess(Process):
     def iterateDescedants(
         self, leafOnly: bool, expandAtomic: bool
     ) -> Generator[List[Process], None, None]:
+        visited: set[int] = set()
         def iterateDescedantsRec(process: Process, pathUntilProc: List[Process]):
             def processToExpand():
                 if not isinstance(process, GroupedProcess): return None
@@ -205,8 +206,18 @@ class GroupedProcess(Process):
                 if leafOnly: return process
                 return process
             if (toExpand := processToExpand()) is not None:
+                processId = id(toExpand)
+                if processId in visited:
+                    ancestors = " -> ".join(p.label for p in pathUntilProc)
+                    raise ValueError(
+                        f"Cycle detected in GroupedProcess traversal: "
+                        f"'{toExpand.label}' already visited. "
+                        f"Path: {ancestors} -> {toExpand.label}"
+                    )
+                visited.add(processId)
                 for p in toExpand.processes:
                     yield from iterateDescedantsRec(p, pathUntilProc + [process])
+                visited.discard(processId)
             else:
                 yield pathUntilProc + [process]
         yield from iterateDescedantsRec(self, [])

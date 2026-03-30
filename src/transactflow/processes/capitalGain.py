@@ -56,7 +56,7 @@ def process() -> List[Process]:
                     assert(gainAmount > 0)
                     yield synthesizedTransaction(
                         date=transaction.date,
-                        description=f"Synthesized capital gain from selling {numUnits} Units",
+                        description=f"Synthesized capital gain from selling {numUnits} Stock Units",
                         amount=MoneyAmount(JPY, gainEntry.gainAmount),
                         account=transaction.account,
                         category=CAPITAL_GAIN,

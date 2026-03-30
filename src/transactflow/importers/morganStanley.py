@@ -16,14 +16,13 @@ class VestedEquityItem:
     vestedUSDJPYRate: float
 
     @classmethod
-    def fromCsvRow(cls, row: Dict[str, str]) -> "VestedEquityItem":
+    def fromCsvRow(
+        cls, row: Dict[str, str], usdJpyRateAtDate: Dict[Date, float]
+    ) -> "VestedEquityItem":
         def usdJpyRate():
-            def usdJpyRateFor(date: str):
-                # Needs new estimation.
-                assert(False)    
             rateStr = row["FX Rate"]
             if rateStr != "": return float(rateStr)
-            return usdJpyRateFor(row["Vesting Date"])
+            return usdJpyRateAtDate[parseDate(row["Vesting Date"]).date()]
         return VestedEquityItem(
             grantDate=parseDate(row["Award Date"]).date(),
             vestingDate=parseDate(row["Vesting Date"]).date(),
@@ -63,14 +62,14 @@ class WithdrawItem:
             numUnits=abs(float(row["Quantity"].replace(",", ""))),
             netUSDAmount=float(row["Net Amount"].replace(",", "").strip("$")))
 
-def parseVested(statementFilePath: str) -> List[Transaction]:
+def parseVested(statementFilePath: str, usdJpyRateAtDate: Dict[Date, float]) -> List[Transaction]:
     def skipStatementLine(raw: str) -> bool:
         return forceReadUserConfig().stock.morganStanleyVestedParsingShouldIgnore({}, raw, 0)
     def parseVestedLine(row: dict, raw: str, lineNum: int) -> Optional[Transaction]:
         if forceReadUserConfig().stock.morganStanleyVestedParsingShouldIgnore(row, raw, lineNum):
             return None
-        item = VestedEquityItem.fromCsvRow(row)
-        description = f"Equity {item.numUnits} Units"
+        item = VestedEquityItem.fromCsvRow(row, usdJpyRateAtDate)
+        description = f"Equity {item.numUnits} Stock Units"
         return Transaction(
             date=item.vestingDate,
             description=description,
@@ -95,7 +94,7 @@ def parseUnvested(unvestedFilePath: str) -> List[Transaction]:
     def parseUnvestedLine(row: dict, raw: str, lineNum: int) -> Optional[Transaction]:
         if raw.startswith('The numbers on this statement reflect'): return None
         item = UnvestedEquityItem.fromCsvRow(row)
-        description = f"Unvested equity {item.numUnits} Units"
+        description = f"Unvested equity {item.numUnits} Stock Units"
         return Transaction(
             date=item.vestingDate,
             description=description,
@@ -135,7 +134,7 @@ def parseWithdraw(
         )
         gains.append(Transaction(
             date=item.date,
-            description=f"Received from sale of {item.numUnits} Units{descriptionSuffix}",
+            description=f"Received from sale of {item.numUnits} Stock Units{descriptionSuffix}",
             rawAmount=MoneyAmount(USD, item.netUSDAmount),
             account=MORGAN_STANLEY,
             category=CURRENCY_CONVERSION_RECEIVED,
@@ -146,7 +145,7 @@ def parseWithdraw(
         ))
         return Transaction(
             date=item.date,
-            description=f"Sale of {item.numUnits} Units{descriptionSuffix}",
+            description=f"Sale of {item.numUnits} Stock Units{descriptionSuffix}",
             rawAmount=-MoneyAmount(STOCK_UNIT, numUnitsTransformed),
             account=MORGAN_STANLEY,
             category=CURRENCY_CONVERSION_SENT,
@@ -165,7 +164,7 @@ def readMorganStanleyCsv(statementFilePath: str,
                          includeUnvested: bool,
                          withdrawReportFilePath: str,
                          usdJpyRateAtDate: Dict[Date, float]) -> List[Transaction]:
-    withoutUnvested = parseVested(statementFilePath) + parseWithdraw(
+    withoutUnvested = parseVested(statementFilePath, usdJpyRateAtDate) + parseWithdraw(
         withdrawReportFilePath, usdJpyRateAtDate
     )
     if includeUnvested: return withoutUnvested + parseUnvested(unvestedFilePath)

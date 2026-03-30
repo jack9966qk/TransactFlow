@@ -1,7 +1,7 @@
 from collections import Counter
 from itertools import zip_longest
 from pathlib import Path
-from typing import Generator, List, Optional
+from typing import Callable, Generator, List, Optional
 from transactflow.base import *
 from transactflow.analysis import accountBalanceByAccount, netWorth, totalAccountBalance, totalSaving
 from transactflow.multiCurrency import totalAdjustedAmountAsJPY
@@ -88,7 +88,18 @@ def transactionTestingStats(transactions: List[Transaction]) -> Generator[str, N
         yield f"{prefix} {cat.label}: {adjustedTotalOf(cat, isForecast=True)}"
     yield ""
 
-def writeTransactionsWithStat(transactions: List[Transaction], path: Path, pretty: bool = False):
+def writeTransactionsWithStat(
+    transactions: List[Transaction],
+    path: Path,
+    transformString: Callable[[str], str],
+    pretty: bool = False
+):
     with open(path, "w", encoding="utf-8") as f:
-        f.writelines(line + "\n" for line in transactionTestingStats(transactions))
-        f.writelines("\n" + transactionRepr(t, pretty=pretty) + "\n" for t in transactions)
+        f.writelines(
+            transformString(line) + "\n"
+            for line in transactionTestingStats(transactions)
+        )
+        f.writelines(
+            "\n" + transformString(transactionRepr(t, pretty=pretty)) + "\n"
+            for t in transactions
+        )

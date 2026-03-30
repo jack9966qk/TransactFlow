@@ -18,9 +18,6 @@ are always applied. User-supplied simpleProcesses from ProcessConfig are appende
 
 def _buildSimpleProcesses() -> List[Process]:
     userSupplied = forceReadUserConfig().processes.simpleProcess
-    return [
-        labelGeneralExpenseDestination,
-        labelNotReallyIncomeIfUncategorizedIncome,
-    ] + ([] if userSupplied is None else [userSupplied])
+    return [] if userSupplied is None else [userSupplied]
 
 process = LazyGroupedProcess(label="Simple categorization", buildProcesses=_buildSimpleProcesses)
