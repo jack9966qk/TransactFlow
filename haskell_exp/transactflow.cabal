@@ -21,6 +21,7 @@ library
     TransactFlow.Process
     TransactFlow.MultiCurrency
     TransactFlow.ExternalTransaction
+    TransactFlow.ExternalProcess
     Proto.Transactflow
     Proto.Transactflow_Fields
   build-depends:

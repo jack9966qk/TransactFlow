@@ -38,6 +38,104 @@ message SourceLocation {
   int32 line_number = 2;
 }
 
+// --------------------------------------------------------------------------
+// Matching / Mapping / Process (cross-language exchange)
+// --------------------------------------------------------------------------
+
+// Parameters for the parametric `matching(...)` constructor.
+message MatchingParams {
+  optional string account = 1;
+  optional int32 year = 2;
+  optional int32 month = 3;
+  optional int32 day = 4;
+  optional Category exact_category = 5;
+  optional string exact_desc = 6;
+  optional string desc_substr = 7;
+  repeated string any_desc_sub_str = 8;
+  repeated string any_desc_regex = 9;
+  bool normalize_desc = 10;
+  bool desc_regex_ignore_case = 11;
+  optional string amount_pos_neg_is = 12;  // "pos" or "neg"
+  optional double quantity = 13;
+  optional double adjusted_quantity = 14;
+  optional Date date_from = 15;
+  optional Date date_until = 16;
+  optional string date = 17;
+  optional string original_format = 18;
+}
+
+// A list of matchings (used for satisfy_all / satisfy_any).
+message MatchingList {
+  repeated ExternalMatching matchings = 1;
+}
+
+// A predicate on transactions, exchangeable between Python and Haskell.
+message ExternalMatching {
+  string label = 1;
+  oneof type {
+    MatchingParams parametric = 2;
+    MatchingList satisfy_all = 3;
+    MatchingList satisfy_any = 4;
+    bool everything = 5;           // marker; value is ignored
+    string named = 6;              // identifier for a known functional matching
+  }
+}
+
+// Parameters for writeCatIf(matching, category).
+message WriteCatIfParams {
+  ExternalMatching matching = 1;
+  Category category = 2;
+}
+
+// A transaction mapping, exchangeable between Python and Haskell.
+message ExternalMapping {
+  string label = 1;
+  oneof type {
+    WriteCatIfParams write_cat_if = 2;
+    string named = 3;              // identifier for a known functional mapping
+  }
+}
+
+// Overrides applied by labelIfMatch / labelAll.
+message LabelOverrides {
+  optional string account = 1;
+  optional Category category = 2;
+  optional string related_to = 3;
+  optional string description = 4;
+  optional string comment = 5;
+  optional int32 expected = 6;
+}
+
+// A list of processes with an atomic flag (for GroupedProcess).
+message ExternalProcessList {
+  repeated ExternalProcess processes = 1;
+  bool atomic = 2;
+}
+
+// A labelled LabelIfMatch: matching + overrides.
+message LabelIfMatchParams {
+  ExternalMatching matching = 1;
+  LabelOverrides overrides = 2;
+}
+
+// A transaction-list transformation, exchangeable between Python and Haskell.
+message ExternalProcess {
+  string label = 1;
+  oneof type {
+    LabelIfMatchParams label_if_match = 2;
+    ExternalMatching filter = 3;
+    ExternalMapping map = 4;
+    ExternalProcessList grouped = 5;
+    bool sort_by_date = 6;         // marker
+    bool sort_by_date_and_more = 7; // marker
+    string named = 8;              // identifier for a known functional process
+  }
+}
+
+// --------------------------------------------------------------------------
+// Transaction
+// --------------------------------------------------------------------------
+
 // A financial transaction in a format shared between Python and Haskell.
 message ExternalTransaction {
   Date date = 1;

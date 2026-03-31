@@ -1,6 +1,8 @@
 module TransactFlow.ExternalTransaction
   ( toExternalTransaction,
     fromExternalTransaction,
+    categoryToProto,
+    categoryFromProto,
   )
 where
 
