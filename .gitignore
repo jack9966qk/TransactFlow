@@ -5,3 +5,8 @@
 # Haskell
 haskell_exp/dist/
 haskell_exp/dist-newstyle/
+
+# Generated protobuf code
+src/transactflow/proto_gen/transactflow_pb2.py
+src/transactflow/proto_gen/transactflow_pb2.pyi
+haskell_exp/gen/

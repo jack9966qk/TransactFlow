@@ -1,0 +1,56 @@
+syntax = "proto3";
+
+package transactflow;
+
+// A calendar date with year, month, and day components.
+message Date {
+  int32 year = 1;
+  int32 month = 2;
+  int32 day = 3;
+}
+
+// A currency identifier.
+message Currency {
+  string label = 1;
+}
+
+// A monetary amount in a specific currency.
+message MoneyAmount {
+  Currency currency = 1;
+  double quantity = 2;
+}
+
+// A hierarchical category. Categories form a tree via the optional parent field.
+message Category {
+  string label = 1;
+  optional Category parent = 2;
+}
+
+// Exchange rates referenced by a transaction.
+message ExchangeRates {
+  optional double usd_jpy_rate = 1;
+  optional double usd_per_stock_unit_share = 2;
+}
+
+// A file path and line number indicating where a transaction was created.
+message SourceLocation {
+  string file_path = 1;
+  int32 line_number = 2;
+}
+
+// A financial transaction in a format shared between Python and Haskell.
+message ExternalTransaction {
+  Date date = 1;
+  string description = 2;
+  MoneyAmount raw_amount = 3;
+  string account = 4;
+  string original_format = 5;
+  optional SourceLocation source_location = 6;
+  Category category = 7;
+  optional string related_to = 8;
+  repeated double adjustments = 9;
+  optional string comment = 10;
+  ExchangeRates exchange_rates = 11;
+  bool is_unrealized = 12;
+  bool is_forecast = 13;
+}

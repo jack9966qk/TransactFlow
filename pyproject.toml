@@ -24,6 +24,7 @@ dependencies = [
     "webdriver-manager>=4.0.2",
     "xlrd>=2.0.2",
     "yfinance>=1.2.0",
+    "protobuf>=5.29.0",
 ]
 
 [tool.setuptools.packages.find]
@@ -35,4 +36,5 @@ python_files = "test_*.py"
 [dependency-groups]
 dev = [
     "pytest>=9.0.2",
+    "grpcio-tools>=1.70.0",
 ]

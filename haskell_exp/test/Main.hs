@@ -1,10 +1,14 @@
 {- HLINT ignore "Redundant bracket" -}
 module Main (main) where
 
+import Data.ByteString qualified as BS
 import Data.Map.Strict qualified as Map
+import Data.ProtoLens (decodeMessage, encodeMessage)
 import Data.Text (Text)
 import Data.Time.Calendar (Day, fromGregorian)
+import Proto.Transactflow qualified as P
 import TransactFlow.Base
+import TransactFlow.ExternalTransaction
 import TransactFlow.MultiCurrency
 import TransactFlow.Process
 
@@ -73,6 +77,7 @@ main = do
   testMatching
   testProcess
   testMultiCurrency
+  testExternalTransaction
   putStrLn "\nAll tests passed."
 
 testMoneyAmount :: IO ()
@@ -301,3 +306,65 @@ testMultiCurrency = do
   let tx3 = addingAdjustment 500 tx1
   assert "totalAdjustedAmount with adjustment" $
     Map.lookup jpy (totalAdjustedAmount [tx3, tx2]).quantities == Just (-2500)
+
+testExternalTransaction :: IO ()
+testExternalTransaction = do
+  putStrLn "\n=== ExternalTransaction ==="
+
+  -- Basic round-trip
+  let tx = mkTx MkTx {on = day 2025 6 15, desc = "Groceries", amount = -3000, cat = food, fromAcct = "SMBC"}
+      rt = fromExternalTransaction (toExternalTransaction tx)
+  assert "round-trip: date" $
+    rt.date == tx.date
+  assert "round-trip: description" $
+    rt.description == tx.description
+  assert "round-trip: rawAmount" $
+    rt.rawAmount == tx.rawAmount
+  assert "round-trip: account" $
+    rt.account == tx.account
+  assert "round-trip: category label" $
+    rt.category.label == tx.category.label
+
+  -- With optional fields
+  let tx2 =
+        (replacingRelatedTo "Employer" . replacingComment "Reimbursement" . addingAdjustment 500) tx
+      rt2 = fromExternalTransaction (toExternalTransaction tx2)
+  assert "round-trip: relatedTo" $
+    rt2.relatedTo == Just "Employer"
+  assert "round-trip: comment" $
+    rt2.comment == Just "Reimbursement"
+  assert "round-trip: adjustments" $
+    rt2.adjustments == [500]
+
+  -- Hierarchical category
+  let tx3 = mkTx MkTx {on = day 2025 1 1, desc = "Dinner", amount = -2000, cat = food, fromAcct = "X"}
+      rt3 = fromExternalTransaction (toExternalTransaction tx3)
+  assert "round-trip: child category" $
+    rt3.category.label == "Food"
+  assert "round-trip: parent category" $
+    fmap (.label) rt3.category.parent == Just "Expense"
+
+  -- Exchange rates
+  let tx4 =
+        tx
+          { exchangeRates =
+              ExchangeRates {usdJPYRate = Just 150.0, usdPerStockUnitShare = Just 200.0}
+          }
+      rt4 = fromExternalTransaction (toExternalTransaction tx4)
+  assert "round-trip: usdJPYRate" $
+    rt4.exchangeRates.usdJPYRate == Just 150.0
+  assert "round-trip: usdPerStockUnitShare" $
+    rt4.exchangeRates.usdPerStockUnitShare == Just 200.0
+
+  -- Serialized bytes round-trip
+  let proto = toExternalTransaction tx2
+      bytes = encodeMessage proto
+      decoded = decodeMessage bytes :: Either String P.ExternalTransaction
+  case decoded of
+    Left err -> assert ("bytes round-trip decode failed: " <> err) False
+    Right restored -> do
+      let rt5 = fromExternalTransaction restored
+      assert "bytes round-trip: description" $
+        rt5.description == tx2.description
+      assert "bytes round-trip: relatedTo" $
+        rt5.relatedTo == Just "Employer"

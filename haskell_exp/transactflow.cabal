@@ -15,16 +15,24 @@ common shared
 
 library
   import:          shared
-  hs-source-dirs:  src
+  hs-source-dirs:  src, gen
   exposed-modules:
     TransactFlow.Base
     TransactFlow.Process
     TransactFlow.MultiCurrency
+    TransactFlow.ExternalTransaction
+    Proto.Transactflow
+    Proto.Transactflow_Fields
   build-depends:
-    base        >= 4.17 && < 5,
-    containers  >= 0.6,
-    text        >= 2.0,
-    time        >= 1.12
+    base             >= 4.17 && < 5,
+    bytestring       >= 0.11,
+    containers       >= 0.6,
+    lens-family       >= 2.1,
+    proto-lens        >= 0.7,
+    proto-lens-runtime >= 0.7,
+    text             >= 2.0,
+    time             >= 1.12,
+    vector           >= 0.13
 
 test-suite tests
   import:          shared
@@ -33,6 +41,8 @@ test-suite tests
   main-is:         Main.hs
   build-depends:
     base,
+    bytestring,
+    proto-lens,
     transactflow,
     containers,
     text,
