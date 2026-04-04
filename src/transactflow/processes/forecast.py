@@ -1,7 +1,6 @@
-from collections import defaultdict
+from typing import List
 from ..base import *
 from datetime import timedelta
-from itertools import product
 from ..multiCurrency import totalAdjustedAmountAsJPY
 from ..process import Process, funcProcess, sortByDateAndMore, LazyGroupedProcess
 from ..userConfig import forceReadUserConfig
@@ -119,8 +118,9 @@ def forecastMonthlyTransactions(
 
 
 def _buildForecastProcesses() -> List[Process]:
-    targetYear = forceReadUserConfig().forecast.targetYear
-    return [forecastMonthlyTransactions(targetYear=targetYear)]
+    config = forceReadUserConfig().forecast
+    if config is None: return []
+    return [forecastMonthlyTransactions(targetYear=config.targetYear)]
 
 
 process = LazyGroupedProcess(label="Forecast", buildProcesses=_buildForecastProcesses)

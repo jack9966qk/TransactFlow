@@ -61,11 +61,13 @@ def getOrRetrieveLatestRates() -> RetrivedRates:
     targetDay = today if now.hour > 4 else today - timedelta(days=1)
     if rates is not None and rates.dateOfRetrieval == targetDay:
         return rates
-    tick = forceReadUserConfig().stock.stockUnitTick
+    stockConfig = forceReadUserConfig().stock
+    assert(stockConfig is not None)
+    stockPrice = yfinance.Ticker(stockConfig.stockUnitTick).history(period="1d")["Close"].iloc[-1]
     rates = RetrivedRates(
         JPYCNYRate=currencyRate(JPY, CNY),
         USDJPYRate=currencyRate(USD, JPY),
-        USDPerStockUnitShare=cast(float, yfinance.Ticker(tick).history(period="1d")["Close"][-1]),
+        USDPerStockUnitShare=cast(float, stockPrice),
         dateOfRetrieval=targetDay)
     with open(RATES_CACHE_PATH, "wb") as f:
         pickle.dump(rates, f)

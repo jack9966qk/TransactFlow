@@ -5,10 +5,15 @@ from ..process import funcMatching, funcProcess, takeFirstMatch
 from ..processes.payslipAnnotationItem import PayslipAnnotationItem
 from ..userConfig import forceReadUserConfig
 
+def readPayslipAnnotations() -> List[PayslipAnnotationItem]:
+    config = forceReadUserConfig().processes
+    if config is None: return []
+    annotations = config.payslipAnnotations
+    if annotations is None: return []
+    return annotations
+
 def expectedTotalBalanceDelta() -> MultiCurrencyAmount:
-    annotations = forceReadUserConfig().processes.payslipAnnotations
-    assert annotations is not None
-    totalPensionVoluntaryQuantity = sum(item.pensionVoluntary for item in annotations)
+    totalPensionVoluntaryQuantity = sum(item.pensionVoluntary for item in readPayslipAnnotations())
     return MultiCurrencyAmount(quantities={JPY: totalPensionVoluntaryQuantity})
 
 @funcProcess()
@@ -21,8 +26,8 @@ def applyPayslipAnnotations(transactions: List[Transaction]) -> List[Transaction
           (each payslip item is internally consistent, verified upon init)
         - Add synthesized transactions for all gross income and its deduction items
     """
-    annotations = forceReadUserConfig().processes.payslipAnnotations
-    if annotations is None:
+    annotations = readPayslipAnnotations()
+    if annotations is None or len(annotations) == 0:
         return transactions
     allNewSynthesizedTransactions = []
     remaining = transactions

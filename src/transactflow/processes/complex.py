@@ -20,7 +20,9 @@ All processes are user-supplied via ProcessConfig.complexProcesses.
 
 
 def _buildComplexProcesses() -> List[Process]:
-    userSupplied = forceReadUserConfig().processes.complexProcess
+    config = forceReadUserConfig().processes
+    if config is None: return []
+    userSupplied = config.complexProcess
     return [] if userSupplied is None else [userSupplied]
 
 

@@ -340,7 +340,9 @@ def processesReprojectingTaxFinalized(
 
 
 def _buildTaxProcesses() -> List[Process]:
-    userSupplied = forceReadUserConfig().processes.taxProcess
+    config = forceReadUserConfig().processes
+    if config is None: return []
+    userSupplied = config.taxProcess
     return [] if userSupplied is None else [userSupplied]
 
 

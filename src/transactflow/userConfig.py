@@ -54,6 +54,11 @@ class MorganStanleyImportConfig:
     equityUnvestedPath: str
     withdrawPath: str
     usdJpyRateAtDate: Dict[Date, float]
+    csvHeaderNumUnits: str
+    vestedParsingShouldIgnore: Callable[[dict, str, int], bool]
+    unvestedParsingShouldIgnore: Callable[[dict, str, int], bool]
+    withdrawParsingShouldIgnore: Callable[[dict, str, int], bool]
+    withdrawTransform: Callable[[int, float, float], Tuple[float, float, str]]
 
 @dataclass(frozen=True)
 class AmazonGiftCardConfig:
@@ -91,11 +96,6 @@ class ImporterConfig:
 @dataclass(frozen=True)
 class StockConfig:
     stockUnitTick: str
-    morganStanleyCsvHeaderNumUnits: str
-    morganStanleyVestedParsingShouldIgnore: Callable[[dict, str, int], bool]
-    morganStanleyUnvestedParsingShouldIgnore: Callable[[dict, str, int], bool]
-    morganStanleyWithdrawParsingShouldIgnore: Callable[[dict, str, int], bool]
-    morganStanleyWithdrawTransform: Callable[[int, float, float], Tuple[float, float, str]]
 
 
 # ---------------------------------------------------------------------------
@@ -133,10 +133,10 @@ class ForecastConfig:
 
 @dataclass(frozen=True)
 class UserConfig:
-    stock: StockConfig
-    importers: ImporterConfig
-    processes: ProcessConfig
-    forecast: ForecastConfig
+    stock: Optional[StockConfig] = None
+    importers: Optional[ImporterConfig] = None
+    processes: Optional[ProcessConfig] = None
+    forecast: Optional[ForecastConfig] = None
 
 
 USER_CONFIG: Optional[UserConfig] = None

@@ -47,6 +47,8 @@ class ImporterProcess(Process):
 
 def _buildImporterProcesses() -> List[Process]:
     config = forceReadUserConfig().importers
+    if config is None: return []
+
     processes: List[Process] = []
 
     if (prestia := config.prestia) is not None:
