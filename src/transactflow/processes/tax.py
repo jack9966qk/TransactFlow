@@ -139,7 +139,7 @@ def reprojectLocalTaxWithSegmentation(toYear: int,
                                       determinedTotals: SegmentedTotals) -> Process:
     """
     All in one solution for local tax reprojection.
-    Reproject paid local tax to toYear as synthesized transactions, where the paid amounts are
+    Reproject paid local tax to toYear as synthetic transactions, where the paid amounts are
     defined by `amountCharged`.
     If the total amount changed is less than `determinedTotals`, then the difference is used to
     reproject unpaid local tax.
@@ -240,7 +240,7 @@ def dateIsWithinLocalTaxSalaryDeduction(date: Date, yearOfIncome: int) -> bool:
     )
 
 def amountIfLocalTaxSalaryDeduction(transaction: Transaction, yearOfIncome: int) -> float:
-    if "Synthesized transaction: local tax deduction" not in transaction.description: return 0
+    if "Synthetic transaction: local tax deduction" not in transaction.description: return 0
     if dateIsWithinLocalTaxSalaryDeduction(transaction.date, yearOfIncome):
         return abs(transaction.adjustedAmount.quantity)
     return 0

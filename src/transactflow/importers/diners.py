@@ -78,7 +78,7 @@ def readDinersCsv(filePath: str) -> List[Transaction]:
         date=estimatedRepaymentDate,
         amount=repaymentAmount,
         account=DINERS_CLUB,
-        description="Synthesized expected repayment for Diners Club",
+        description="Synthetic expected repayment for Diners Club",
         category=EXPECTED_INTERNAL_TRANSFER,
     )
 

@@ -164,35 +164,35 @@ testTransaction = do
   assert "replacing relatedTo" $
     tx4.relatedTo == Just "Landlord"
 
-  -- synthesized transaction with amountIsRaw=False
+  -- synthetic transaction with amountIsRaw=False
   let synth =
-        syntheticTransaction
-          defaultSynthesizedTx
-            { synthDate = day 2025 3 1,
-              synthDescription = "Synth",
-              synthAmount = MoneyAmount jpy (-5000),
-              synthCategory = expense,
-              synthAccount = "Pseudo"
-            }
-  assert "synthesized: raw amount is zero" $
+    syntheticTransaction
+      defaultSyntheticTx
+        { synthDate = day 2025 3 1,
+          synthDescription = "Synth",
+          synthAmount = MoneyAmount jpy (-5000),
+          synthCategory = expense,
+          synthAccount = "Pseudo"
+        }
+  assert "synthetic: raw amount is zero" $
     synth.rawAmount.quantity == 0
-  assert "synthesized: adjustment carries amount" $
+  assert "synthetic: adjustment carries amount" $
     adjustedAmount synth == MoneyAmount jpy (-5000)
 
-  -- synthesized transaction with amountIsRaw=True
+  -- synthetic transaction with amountIsRaw=True
   let synthRaw =
-        syntheticTransaction
-          defaultSynthesizedTx
-            { synthDate = day 2025 3 1,
-              synthDescription = "SynthRaw",
-              synthAmount = MoneyAmount jpy 10000,
-              synthCategory = income,
-              synthAccount = "Bank",
-              synthAmountIsRaw = True
-            }
-  assert "synthesized raw: raw amount preserved" $
+    syntheticTransaction
+      defaultSyntheticTx
+        { synthDate = day 2025 3 1,
+          synthDescription = "SynthRaw",
+          synthAmount = MoneyAmount jpy 10000,
+          synthCategory = income,
+          synthAccount = "Bank",
+          synthAmountIsRaw = True
+        }
+  assert "synthetic raw: raw amount preserved" $
     synthRaw.rawAmount == MoneyAmount jpy 10000
-  assert "synthesized raw: no adjustments" $
+  assert "synthetic raw: no adjustments" $
     null (synthRaw.adjustments)
 
 testMatching :: IO ()

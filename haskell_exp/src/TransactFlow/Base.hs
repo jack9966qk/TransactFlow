@@ -39,8 +39,8 @@ module TransactFlow.Base
     replacingDescription,
     replacingComment,
     addingAdjustment,
-    SynthesizedTx (..),
-    defaultSynthesizedTx,
+    SyntheticTx (..),
+    defaultSyntheticTx,
     syntheticTransaction,
     sortedByDate,
 
@@ -235,8 +235,8 @@ replacingComment c t = t {comment = Just c}
 addingAdjustment :: Double -> Transaction -> Transaction
 addingAdjustment adj t = t {adjustments = t.adjustments ++ [adj]}
 
--- | Parameters for creating a synthesized (artificial) transaction.
-data SynthesizedTx = SynthesizedTx
+-- | Parameters for creating a synthetic (artificial) transaction.
+data SyntheticTx = SyntheticTx
   { synthDate :: Day,
     synthDescription :: Text,
     synthAmount :: MoneyAmount,
@@ -253,9 +253,9 @@ data SynthesizedTx = SynthesizedTx
 -- | Default with all optional fields set to safe values.
 -- Caller must override synthDate, synthDescription, synthAmount,
 -- synthCategory, and synthAccount.
-defaultSynthesizedTx :: SynthesizedTx
-defaultSynthesizedTx =
-  SynthesizedTx
+defaultSyntheticTx :: SyntheticTx
+defaultSyntheticTx =
+  SyntheticTx
     { synthDate = toEnum 0,
       synthDescription = "",
       synthAmount = emptyAmount,
@@ -268,9 +268,9 @@ defaultSynthesizedTx =
       synthExchangeRates = emptyExchangeRates
     }
 
--- | Create a synthesized (artificial) transaction. When synthAmountIsRaw is
+-- | Create a synthetic (artificial) transaction. When synthAmountIsRaw is
 -- False, the raw amount is set to zero and the quantity goes into adjustments.
-syntheticTransaction :: SynthesizedTx -> Transaction
+syntheticTransaction :: SyntheticTx -> Transaction
 syntheticTransaction p =
   let (raw, adjs)
         | p.synthAmountIsRaw = (p.synthAmount, [])

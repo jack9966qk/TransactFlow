@@ -8,8 +8,8 @@ from typing import List, Optional, TextIO, cast, Tuple
 from datetime import timedelta
 import re
 
-JCB_EXPECTED_AUTOMATIC_REPAYMENT_DESCRIPTION = "Synthesized expected repayment for JCB"
-JCB_EXPECTED_MANUAL_REPAYMENT_DESCRIPTION = "Synthesized expected manual repayment for JCB"
+JCB_EXPECTED_AUTOMATIC_REPAYMENT_DESCRIPTION = "Synthetic expected repayment for JCB"
+JCB_EXPECTED_MANUAL_REPAYMENT_DESCRIPTION = "Synthetic expected manual repayment for JCB"
 
 def readJcbCsvFiles(monthsDir: str, timestampPath: str) -> List[List[Transaction]]:
     transactionGroups: List[List[Transaction]] = []

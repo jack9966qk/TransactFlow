@@ -102,7 +102,7 @@ class TestTransaction:
         t2 = t.replacingAccount("New Account")
         assert t2.account == "New Account"
 
-    def test_synthesized_transaction(self):
+    def test_synthetic_transaction(self):
         t = syntheticTransaction(
             date=date(2025, 3, 1),
             description="Synth",
