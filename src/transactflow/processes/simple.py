@@ -4,14 +4,14 @@ from ..process import (
     LazyGroupedProcess,
     Process,
     labelGeneralExpenseDestination,
-    labelNotReallyIncomeIfUncategorizedIncome,
+    labelExcludedIncomeIfUncategorizedIncome,
 )
 from ..userConfig import forceReadUserConfig
 
 """
 Simple categorization processes.
 
-Built-in rules (labelGeneralExpenseDestination, labelNotReallyIncomeIfUncategorizedIncome)
+Built-in rules (labelGeneralExpenseDestination, labelExcludedIncomeIfUncategorizedIncome)
 are always applied. User-supplied simpleProcesses from ProcessConfig are appended after.
 """
 

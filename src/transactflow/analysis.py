@@ -38,7 +38,7 @@ def transListToHtmlTable(trans: Iterable[Transaction], colorOn=False):
     def toHtmlRow(t: Transaction):
         if any(
             t.category.isUnder(cat)
-            for cat in [NOT_REALLY_INCOME, INTERNAL_TRANSFER]
+            for cat in [EXCLUDED_INCOME, INTERNAL_TRANSFER]
         ):
             colorCode = IRRELEVANT_COLOR_CODE
         else:
@@ -326,7 +326,7 @@ class SegmentedDisplayOption(Enum):
             if t.category.isUnder(LOCAL_TAX_REPROJECTED_BONUS): return True
             if t.category.isUnder(ESTIMATED_UNPAID_TAX_BONUS): return True
             if t.category.isUnder(WELFARE_BONUS): return True
-            if t.category.isUnder(HELATH_INSURANCE_BONUS): return True
+            if t.category.isUnder(HEALTH_INSURANCE_BONUS): return True
             if t.category.isUnder(UNEMPL_INS_BONUS): return True
             if t.category.isUnder(MISC_INCOME_DEDUCTION_BONUS): return True
             if t.category.isUnder(NATIONAL_TAX_WITHHOLDING_BONUS): return True
@@ -647,11 +647,11 @@ class DeductIncomeOption(Enum):
         if self == Self.DEDUCT_SOCIAL_SECURITY:
             return {
                 WELFARE_SALARY:               SALARY,
-                HELATH_INSURANCE_SALARY:      SALARY,
+                HEALTH_INSURANCE_SALARY:      SALARY,
                 UNEMPL_INS_SALARY:            SALARY,
                 MISC_INCOME_DEDUCTION_SALARY: SALARY,
                 WELFARE_BONUS:                BONUS,
-                HELATH_INSURANCE_BONUS:       BONUS,
+                HEALTH_INSURANCE_BONUS:       BONUS,
                 UNEMPL_INS_BONUS:             BONUS,
                 MISC_INCOME_DEDUCTION_BONUS:  BONUS
             }

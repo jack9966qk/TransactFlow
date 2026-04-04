@@ -1,6 +1,6 @@
 from calendar import c
 import os
-from ..base import AMEX_JP, EXPENSE, INCOME, JPY, SOURCE_CUTOFF, MoneyAmount, Transaction, synthesizedTransaction
+from ..base import AMEX_JP, EXPENSE, INCOME, JPY, SOURCE_CUTOFF, MoneyAmount, Transaction, syntheticTransaction
 from .importer import CsvImporter, addingCutoffTransactionTo, readDateOfTimestampFile
 from dateutil.parser import parse as parseDate
 from typing import List, Optional, TextIO, cast
@@ -56,7 +56,7 @@ def readAmexJpCsv(filename: str) -> List[Transaction]:
                     rawAmount=MoneyAmount(JPY, amount),
                     account=AMEX_JP,
                     category=EXPENSE if amount < 0 else INCOME,
-                    originalFormat=raw,
+                    rawRecord=raw,
                     sourceLocation=(filename, lineNum - numLines),
                     comment=cm if cm and len(cm) > 0 else None)
             case _:

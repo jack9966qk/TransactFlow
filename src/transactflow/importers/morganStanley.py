@@ -76,7 +76,7 @@ def parseVested(statementFilePath: str, usdJpyRateAtDate: Dict[Date, float]) -> 
             rawAmount=MoneyAmount(STOCK_UNIT, item.numUnits),
             account=MORGAN_STANLEY,
             category=EQUITY_VESTING,
-            originalFormat=raw,
+            rawRecord=raw,
             relatedTo=EMPLOYER,
             sourceLocation=(statementFilePath, -lineNum),
             referencedExchangeRates=ExchangeRates(
@@ -101,7 +101,7 @@ def parseUnvested(unvestedFilePath: str) -> List[Transaction]:
             rawAmount=MoneyAmount(STOCK_UNIT, 0),
             account=MORGAN_STANLEY,
             category=EQUITY_VESTING,
-            originalFormat=raw,
+            rawRecord=raw,
             relatedTo=EMPLOYER,
             sourceLocation=(unvestedFilePath, lineNum),
             adjustments=(item.numUnits,),
@@ -138,7 +138,7 @@ def parseWithdraw(
             rawAmount=MoneyAmount(USD, item.netUSDAmount),
             account=MORGAN_STANLEY,
             category=CURRENCY_CONVERSION_RECEIVED,
-            originalFormat=raw,
+            rawRecord=raw,
             relatedTo=MORGAN_STANLEY,
             sourceLocation=(withdrawReportFilePath, -lineNum),
             referencedExchangeRates=rates
@@ -149,7 +149,7 @@ def parseWithdraw(
             rawAmount=-MoneyAmount(STOCK_UNIT, numUnitsTransformed),
             account=MORGAN_STANLEY,
             category=CURRENCY_CONVERSION_SENT,
-            originalFormat=raw,
+            rawRecord=raw,
             relatedTo=MORGAN_STANLEY,
             sourceLocation=(withdrawReportFilePath, -lineNum),
             referencedExchangeRates=rates

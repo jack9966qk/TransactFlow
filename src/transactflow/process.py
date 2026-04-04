@@ -32,12 +32,12 @@ __all__ = [
     "filterProc", "mapProc",
     "labelIfMatch", "labelAll",
     "labelSalaryIncome",
-    "labelNotReallyIncomeIfUncategorizedIncome", "labelGeneralExpenseDestination",
+    "labelExcludedIncomeIfUncategorizedIncome", "labelGeneralExpenseDestination",
     "relabelShoppingAsDaily", "relabelShoppingAsMajor",
     "takeMatched", "takeFirstMatch",
     "splitTransactionFee",
     "applyRefundOrReimbursement", "labelAndApplyRefundOrReimbursement",
-    "monthlySynthesizedTransactionsToAdd",
+    "monthlySyntheticTransactionsToAdd",
     "addTaxAdjustments", "TaxRedistributionConfig", "collectAndDistributeTax",
     "sortByDate", "sortByDateAndMore", "moveSalaryToFirstOfDay",
 ]
@@ -91,7 +91,7 @@ def matching(
     dateFrom: Optional[Date] = None,
     dateUntil: Optional[Date] = None,
     date: Optional[str] = None,
-    originalFormat: Optional[str] = None,
+    rawRecord: Optional[str] = None,
     breakpointOnTransaction: Optional[Callable[[Transaction], bool]] = None
 ) -> LabelledFunctionalMatching:
     label = argsDesc(locals().items())
@@ -146,8 +146,8 @@ def matching(
             posNeg = "pos" if t.rawAmount.quantity >= 0 else "neg"
             if amountPosNegIs not in ["pos", "neg"]: assert(False)
             if amountPosNegIs != posNeg: return False
-        if originalFormat is not None:
-            if t.originalFormat.strip() != originalFormat.strip(): return False
+        if rawRecord is not None:
+            if t.rawRecord.strip() != rawRecord.strip(): return False
         return True
     return LabelledFunctionalMatching(matchingFn, label)
 
@@ -386,9 +386,9 @@ def isSalary(t: Transaction) -> bool:
 labelSalaryIncome = labelIfMatch(isSalary, category=SALARY)
 
 @funcProcessWrapper()
-def labelNotReallyIncomeIfUncategorizedIncome(): return labelIfMatch(
+def labelExcludedIncomeIfUncategorizedIncome(): return labelIfMatch(
     matching(amountPosNegIs="pos", exactCategory=INCOME),
-    category=NOT_REALLY_INCOME, relatedTo=OTHER_INCOME_SOURCE)
+    category=EXCLUDED_INCOME, relatedTo=OTHER_INCOME_SOURCE)
 
 @funcProcessWrapper()
 def labelGeneralExpenseDestination(): return labelIfMatch(
@@ -455,9 +455,9 @@ def splitTransactionFee(match: Matching, feeName, feeAbsAmount: MoneyAmount) -> 
         assert(paymentTransaction.rawAmount.currency == feeAbsAmount.currency)
         return [
             paymentTransaction.addingAdjustment(feeAbsAmount.quantity),
-            synthesizedTransaction(
+            syntheticTransaction(
                 date=paymentTransaction.date,
-                description=f"Synthesized transaction: {feeName}",
+                description=f"Synthetic transaction: {feeName}",
                 amount=-feeAbsAmount,
                 category=EXPENSE,
                 account=paymentTransaction.account)
@@ -505,17 +505,17 @@ def labelAndApplyRefundOrReimbursement(expenseMatches: List[Matching],
         applyRefundOrReimbursement(expenseMatches, reimbursementMatch, label=label)
     ])
 
-def monthlySynthesizedTransactionsToAdd(
+def monthlySyntheticTransactionsToAdd(
     splitRatio: Dict[int, float],
-    synthesizedTransactionForMonth: Callable[[int, MoneyAmount], Transaction],
+    syntheticTranssactionForMonth: Callable[[int, MoneyAmount], Transaction],
     totalAmount: MoneyAmount
 ) -> List[Transaction]:
     """
-    Split total amount to each month of the year, and generate synthesized transactions for each
+    Split total amount to each month of the year, and generate synthetic transactions for each
     month if any amount. Amount can be positive or negative, splitRatio maps from month to a float
     of any positive number, representing ratio for each month of the year.
     `pseudoTransactionForMonth` is a function that takes month and amount as argument, and returns
-    the synthesized transaction to be added.
+    the synthetic transaction to be added.
     """
     if totalAmount.quantity == 0: return []
     ratioSum = sum(splitRatio.values())
@@ -524,9 +524,9 @@ def monthlySynthesizedTransactionsToAdd(
     assert(0.999 < sum(normalizedRatio.values()) < 1.001)
     def generateTransactions():
         for month, ratio in normalizedRatio.items():
-            synthesized = synthesizedTransactionForMonth(month, totalAmount * ratio)
-            assert(synthesized.adjustedAmount == totalAmount * ratio)
-            yield synthesized
+            synthetic = syntheticTranssactionForMonth(month, totalAmount * ratio)
+            assert(synthetic.adjustedAmount == totalAmount * ratio)
+            yield synthetic
     return list(generateTransactions())
 
 def addTaxAdjustments(transactions: List[Transaction],
@@ -564,22 +564,22 @@ def addTaxAdjustments(transactions: List[Transaction],
         )
         def pseudoTransactionForMonth(month: int, amount: MoneyAmount):
             # TODO: Avoid having placeholder day.
-            return synthesizedTransaction(
+            return syntheticTransaction(
                 date=Date(year=toYear, month=month, day=26),
-                description=f"Synthesized tax item for {taxDescription} at {toYear}/{month}",
+                description=f"Synthetic tax item for {taxDescription} at {toYear}/{month}",
                 amount=amount,
                 category=taxCategory,
                 account=taxAccount,
                 isForecast=isForecast)
-        return monthlySynthesizedTransactionsToAdd(
+        return monthlySyntheticTransactionsToAdd(
             splitRatio=weightingTotalsByMonth,
-            synthesizedTransactionForMonth=pseudoTransactionForMonth,
+            syntheticTranssactionForMonth=pseudoTransactionForMonth,
             totalAmount=-totalAbsAmountToAdd)
     allTransactionsToAdd = (
         transactionsToAdd(isForecast=True) + transactionsToAdd(isForecast=False)
     )
     totalNegAmountAdded = sumSingleCurrencyAmounts(t.adjustedAmount for t in allTransactionsToAdd)
-    assert(amonutDeltaIsNegligible(totalAbsAmount + totalNegAmountAdded))
+    assert(amountDeltaIsNegligible(totalAbsAmount + totalNegAmountAdded))
     return sortByDateAndMore(transactions + allTransactionsToAdd)
 
 @dataclass

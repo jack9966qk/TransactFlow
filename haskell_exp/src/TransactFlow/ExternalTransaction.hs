@@ -58,7 +58,7 @@ toExternalTransaction t =
     & F.description .~ t.description
     & F.rawAmount .~ moneyAmountToProto t.rawAmount
     & F.account .~ t.account
-    & F.originalFormat .~ t.originalFormat
+    & F.rawRecord .~ t.rawRecord
     & F.maybe'sourceLocation .~ fmap sourceLocationToProto t.sourceLocation
     & F.category .~ categoryToProto t.category
     & F.maybe'relatedTo .~ t.relatedTo
@@ -111,7 +111,7 @@ fromExternalTransaction et =
       description = view F.description et,
       rawAmount = moneyAmountFromProto (view F.rawAmount et),
       account = view F.account et,
-      originalFormat = view F.originalFormat et,
+      rawRecord = view F.rawRecord et,
       sourceLocation = fmap sourceLocationFromProto (view F.maybe'sourceLocation et),
       category = categoryFromProto (view F.category et),
       relatedTo = view F.maybe'relatedTo et,

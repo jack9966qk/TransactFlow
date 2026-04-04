@@ -19,9 +19,9 @@ COLORS: Dict[Category, str] = {
     # Expense
     RENT: "xkcd:pinkish orange",
     SOCIAL_SECURITY: "xkcd:tree green",
-    HELATH_INSURANCE: "xkcd:tree green",
-    HELATH_INSURANCE_SALARY: "xkcd:tree green",
-    HELATH_INSURANCE_BONUS: "xkcd:tree green",
+    HEALTH_INSURANCE: "xkcd:tree green",
+    HEALTH_INSURANCE_SALARY: "xkcd:tree green",
+    HEALTH_INSURANCE_BONUS: "xkcd:tree green",
     WELFARE: "xkcd:indigo",
     WELFARE_SALARY: "xkcd:indigo",
     WELFARE_BONUS: "xkcd:indigo",

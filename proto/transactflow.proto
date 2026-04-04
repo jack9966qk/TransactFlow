@@ -61,7 +61,7 @@ message MatchingParams {
   optional Date date_from = 15;
   optional Date date_until = 16;
   optional string date = 17;
-  optional string original_format = 18;
+  optional string raw_record = 18;
 }
 
 // A list of matchings (used for satisfy_all / satisfy_any).
@@ -142,7 +142,7 @@ message ExternalTransaction {
   string description = 2;
   MoneyAmount raw_amount = 3;
   string account = 4;
-  string original_format = 5;
+  string raw_record = 5;
   optional SourceLocation source_location = 6;
   Category category = 7;
   optional string related_to = 8;

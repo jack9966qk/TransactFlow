@@ -41,7 +41,7 @@ module TransactFlow.Base
     addingAdjustment,
     SynthesizedTx (..),
     defaultSynthesizedTx,
-    synthesizedTransaction,
+    syntheticTransaction,
     sortedByDate,
 
     -- * ExchangeRates
@@ -194,7 +194,7 @@ data Transaction = Transaction
     description :: Text,
     rawAmount :: MoneyAmount,
     account :: Account,
-    originalFormat :: Text,
+    rawRecord :: Text,
     sourceLocation :: Maybe (Text, Int),
     category :: Category,
     -- Extension fields
@@ -270,8 +270,8 @@ defaultSynthesizedTx =
 
 -- | Create a synthesized (artificial) transaction. When synthAmountIsRaw is
 -- False, the raw amount is set to zero and the quantity goes into adjustments.
-synthesizedTransaction :: SynthesizedTx -> Transaction
-synthesizedTransaction p =
+syntheticTransaction :: SynthesizedTx -> Transaction
+syntheticTransaction p =
   let (raw, adjs)
         | p.synthAmountIsRaw = (p.synthAmount, [])
         | otherwise = (MoneyAmount p.synthAmount.currency 0, [p.synthAmount.quantity])
@@ -280,7 +280,7 @@ synthesizedTransaction p =
           description = p.synthDescription,
           rawAmount = raw,
           account = p.synthAccount,
-          originalFormat = "",
+          rawRecord = "",
           sourceLocation = Nothing,
           category = p.synthCategory,
           relatedTo = p.synthRelatedTo,

@@ -85,7 +85,7 @@ def _registerBuiltins() -> None:
         isMajorShopping,
         isSalary,
         labelGeneralExpenseDestination,
-        labelNotReallyIncomeIfUncategorizedIncome,
+        labelExcludedIncomeIfUncategorizedIncome,
         labelSalaryIncome,
         moveSalaryToFirstOfDay,
         relabelShoppingAsDaily,
@@ -99,8 +99,8 @@ def _registerBuiltins() -> None:
 
     registerNamedProcess("labelSalaryIncome", labelSalaryIncome)
     registerNamedProcess(
-        "labelNotReallyIncomeIfUncategorizedIncome",
-        labelNotReallyIncomeIfUncategorizedIncome,
+        "labelExcludedIncomeIfUncategorizedIncome",
+        labelExcludedIncomeIfUncategorizedIncome,
     )
     registerNamedProcess(
         "labelGeneralExpenseDestination", labelGeneralExpenseDestination
@@ -200,8 +200,8 @@ def _matchingParamsToProto(m: LabelledFunctionalMatching) -> Optional[pb.Matchin
             kwargs["date_until"] = _parseDateToProto(val)
         elif key == "date":
             kwargs["date"] = val
-        elif key == "originalFormat":
-            kwargs["original_format"] = val
+        elif key == "rawRecord":
+            kwargs["raw_record"] = val
         elif key == "breakpointOnTransaction":
             # Cannot serialise; skip.
             pass
@@ -358,8 +358,8 @@ def _matchingParamsFromProto(mp: pb.MatchingParams, label: str) -> Matching:
         kwargs["dateUntil"] = _dateFromProto(mp.date_until)
     if mp.HasField("date"):
         kwargs["date"] = mp.date
-    if mp.HasField("original_format"):
-        kwargs["originalFormat"] = mp.original_format
+    if mp.HasField("raw_record"):
+        kwargs["rawRecord"] = mp.raw_record
 
     return matching(**kwargs)
 

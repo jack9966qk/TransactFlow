@@ -21,7 +21,7 @@ def readManualRecordCsv(filename: str) -> List[Transaction]:
             account=CASH,
             relatedTo=GENERAL_EXPENSE_DESTINATION,
             category=category,
-            originalFormat=raw,
+            rawRecord=raw,
             sourceLocation=(filename, lineNum))
 
     with open(filename, "r") as f:

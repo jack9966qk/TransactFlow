@@ -283,7 +283,7 @@ def yearlyTaxSummaryFromTransactions(year: int,
         # This amount does not include NON_TAXABLE_SALARY.
         accumulatingSummary.salary += totalOf(SALARY)
         accumulatingSummary.salaryWithholding += totalOf(NATIONAL_TAX_WITHHOLDING_SALARY)
-        accumulatingSummary.salarySocialSecurity += totalOf(HELATH_INSURANCE_SALARY)
+        accumulatingSummary.salarySocialSecurity += totalOf(HEALTH_INSURANCE_SALARY)
         accumulatingSummary.salarySocialSecurity += totalOf(WELFARE_SALARY)
         accumulatingSummary.salarySocialSecurity += totalOf(UNEMPL_INS_SALARY)
     addSalaryItems(useForecast=False)
@@ -291,7 +291,7 @@ def yearlyTaxSummaryFromTransactions(year: int,
         def totalOf(cat: Category): return totalOfExactCategory(cat, useForecast=useForecast)
         accumulatingSummary.bonus += totalOf(BONUS)
         accumulatingSummary.bonusWithholding += totalOf(NATIONAL_TAX_WITHHOLDING_BONUS)
-        accumulatingSummary.bonusSocialSecurity += totalOf(HELATH_INSURANCE_BONUS)
+        accumulatingSummary.bonusSocialSecurity += totalOf(HEALTH_INSURANCE_BONUS)
         accumulatingSummary.bonusSocialSecurity += totalOf(WELFARE_BONUS)
         accumulatingSummary.bonusSocialSecurity += totalOf(UNEMPL_INS_BONUS)
     addBonusItems(useForecast=False)

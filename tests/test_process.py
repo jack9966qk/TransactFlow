@@ -25,7 +25,7 @@ def makeTransaction(
         description=description,
         rawAmount=MoneyAmount(JPY, amount),
         account=account,
-        originalFormat="test,row",
+        rawRecord="test,row",
         sourceLocation=("test.csv", 1),
         category=category,
         relatedTo=relatedTo,

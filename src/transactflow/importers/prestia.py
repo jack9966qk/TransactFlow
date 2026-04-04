@@ -1,5 +1,5 @@
 from itertools import count
-from ..base import EXPENSE, INCOME, JPY, SOURCE_CUTOFF, MoneyAmount, Transaction, SMBC_PRESTIA, synthesizedTransaction
+from ..base import EXPENSE, INCOME, JPY, SOURCE_CUTOFF, MoneyAmount, Transaction, SMBC_PRESTIA, syntheticTransaction
 from .importer import CsvImporter, addingCutoffTransactionTo, readDateOfTimestampFile
 from dateutil.parser import parse as parseDate
 from typing import List, Optional, Tuple
@@ -29,7 +29,7 @@ def readPrestiaCsv(filename: str, timestampPath: str) -> List[Transaction]:
             description=de,
             rawAmount=MoneyAmount(JPY, amount),
             account=SMBC_PRESTIA,
-            originalFormat=raw,
+            rawRecord=raw,
             category=categoty,
             sourceLocation=(filename, lineNum - numLines - 1))
     

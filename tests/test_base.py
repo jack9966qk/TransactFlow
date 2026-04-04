@@ -6,11 +6,11 @@ from transactflow.base import (
     EXPENSE, INCOME, SALARY, JPY, USD, STOCK_UNIT,
     EMPTY_AMOUNT, EMPTY_EXCHANGE_RATES, EMPTY_CURRENCY,
     SMBC_PRESTIA, EMPLOYER,
-    synthesizedTransaction, sortedByDate,
+    syntheticTransaction, sortedByDate,
     sumSingleCurrencyAmounts, amountsHaveSameCurrency,
     splitIntoTimeSectionsBySalaryIncome,
     groupAsDict, concat, mapOptional,
-    amonutDeltaIsNegligible, SegmentedTotals,
+    amountDeltaIsNegligible, SegmentedTotals,
 )
 
 
@@ -77,7 +77,7 @@ class TestTransaction:
             description="Test transaction",
             rawAmount=MoneyAmount(JPY, amount),
             account=SMBC_PRESTIA,
-            originalFormat="test,row",
+            rawRecord="test,row",
             sourceLocation=("test.csv", 1),
             category=category,
             relatedTo=EMPLOYER,
@@ -103,7 +103,7 @@ class TestTransaction:
         assert t2.account == "New Account"
 
     def test_synthesized_transaction(self):
-        t = synthesizedTransaction(
+        t = syntheticTransaction(
             date=date(2025, 3, 1),
             description="Synth",
             amount=MoneyAmount(JPY, 5000),
@@ -116,11 +116,11 @@ class TestTransaction:
 
 class TestUtilities:
     def test_sorted_by_date(self):
-        t1 = synthesizedTransaction(date=date(2025, 3, 1), description="c",
+        t1 = syntheticTransaction(date=date(2025, 3, 1), description="c",
                                     amount=MoneyAmount(JPY, 0), category=EXPENSE, account="A")
-        t2 = synthesizedTransaction(date=date(2025, 1, 1), description="a",
+        t2 = syntheticTransaction(date=date(2025, 1, 1), description="a",
                                     amount=MoneyAmount(JPY, 0), category=EXPENSE, account="A")
-        t3 = synthesizedTransaction(date=date(2025, 2, 1), description="b",
+        t3 = syntheticTransaction(date=date(2025, 2, 1), description="b",
                                     amount=MoneyAmount(JPY, 0), category=EXPENSE, account="A")
         result = sortedByDate([t1, t2, t3])
         assert [t.description for t in result] == ["a", "b", "c"]
@@ -146,7 +146,7 @@ class TestUtilities:
         assert mapOptional(None, lambda x: x * 2) is None
 
     def test_amount_delta_negligible(self):
-        assert amonutDeltaIsNegligible(MoneyAmount(JPY, 50))
-        assert not amonutDeltaIsNegligible(MoneyAmount(JPY, 200))
-        assert amonutDeltaIsNegligible(MoneyAmount(USD, 0.5))
-        assert not amonutDeltaIsNegligible(MoneyAmount(USD, 2))
+        assert amountDeltaIsNegligible(MoneyAmount(JPY, 50))
+        assert not amountDeltaIsNegligible(MoneyAmount(JPY, 200))
+        assert amountDeltaIsNegligible(MoneyAmount(USD, 0.5))
+        assert not amountDeltaIsNegligible(MoneyAmount(USD, 2))

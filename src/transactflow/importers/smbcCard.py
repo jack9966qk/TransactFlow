@@ -1,5 +1,5 @@
 import os
-from ..base import EXPECTED_INTERNAL_TRANSFER, EXPENSE, INCOME, JPY, SMBC_CREDIT_CARD, MoneyAmount, Transaction, Date, sumSingleCurrencyAmounts, synthesizedTransaction
+from ..base import EXPECTED_INTERNAL_TRANSFER, EXPENSE, INCOME, JPY, SMBC_CREDIT_CARD, MoneyAmount, Transaction, Date, sumSingleCurrencyAmounts, syntheticTransaction
 from ..retrieval.common import forEachFileToReadFrom
 from .importer import CsvImporter, addingCutoffTransactionTo, readDateOfTimestampFile
 from dateutil.parser import parse as parseDate
@@ -36,7 +36,7 @@ def readSmbcCardCsv(filePath: str) -> List[Transaction]:
                 fileName = os.path.basename(filePath)
                 year = int(fileName[:4])
                 month = int(fileName[4:6])
-                return synthesizedTransaction(
+                return syntheticTransaction(
                     date=Date(year, month, 10),
                     description="Expected repayment with estimated date",
                     amount=MoneyAmount(JPY, float(total)),
@@ -56,7 +56,7 @@ def readSmbcCardCsv(filePath: str) -> List[Transaction]:
             rawAmount=MoneyAmount(JPY, amount),
             account=SMBC_CREDIT_CARD,
             category=category,
-            originalFormat=raw,
+            rawRecord=raw,
             sourceLocation=(filePath, lineNum))
 
     # Files are readable with "shift_jis" encoding, but it seems like

@@ -23,7 +23,7 @@ def readSBINetBankCSV(filename: str, timestampPath: str) -> List[Transaction]:
             description=row["内容"],
             rawAmount=MoneyAmount(JPY, quantity),
             account=SBI_NET_BANK,
-            originalFormat=raw,
+            rawRecord=raw,
             category=EXPENSE if quantity < 0 else INCOME,
             sourceLocation=(filename, lineNum - numLines - 1))
 

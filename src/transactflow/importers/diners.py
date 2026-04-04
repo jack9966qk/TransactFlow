@@ -1,7 +1,7 @@
 from calendar import c
 from datetime import timedelta
 import os
-from ..base import DINERS_CLUB, EMPTY_AMOUNT, EXPECTED_INTERNAL_TRANSFER, EXPENSE, INCOME, JPY, SMBC_CREDIT_CARD, SOURCE_CUTOFF, Date, MoneyAmount, Transaction, synthesizedTransaction
+from ..base import DINERS_CLUB, EMPTY_AMOUNT, EXPECTED_INTERNAL_TRANSFER, EXPENSE, INCOME, JPY, SMBC_CREDIT_CARD, SOURCE_CUTOFF, Date, MoneyAmount, Transaction, syntheticTransaction
 from ..retrieval.common import forEachFileToReadFrom
 from .importer import CsvImporter, RepaymentContext, addingCutoffTransactionTo, readDateOfTimestampFile
 from dateutil.parser import parse as parseDate
@@ -58,7 +58,7 @@ def readDinersCsv(filePath: str) -> List[Transaction]:
             rawAmount=amount,
             account=DINERS_CLUB,
             category=category,
-            originalFormat=raw,
+            rawRecord=raw,
             sourceLocation=(filePath, lineNum),
             comment=comment if len(comment) > 0 else None)
 
@@ -74,7 +74,7 @@ def readDinersCsv(filePath: str) -> List[Transaction]:
     repaymentYear = groupYear + 1 if shouldRollover else groupYear
     repaymentMonth = 1 if shouldRollover else groupMonth + 1
     estimatedRepaymentDate = Date(year=repaymentYear, month=repaymentMonth, day=10)
-    expectedRepayment = synthesizedTransaction(
+    expectedRepayment = syntheticTransaction(
         date=estimatedRepaymentDate,
         amount=repaymentAmount,
         account=DINERS_CLUB,

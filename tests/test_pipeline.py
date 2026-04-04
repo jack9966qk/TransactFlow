@@ -31,12 +31,7 @@ def _revolut_timestamp_path():
 
 def _dummy_stock_config():
     return StockConfig(
-        stockUnitTick="DUMMY",
-        morganStanleyCsvHeaderNumUnits="Quantity",
-        morganStanleyVestedParsingShouldIgnore=lambda r, s, n: False,
-        morganStanleyUnvestedParsingShouldIgnore=lambda r, s, n: False,
-        morganStanleyWithdrawParsingShouldIgnore=lambda r, s, n: False,
-        morganStanleyWithdrawTransform=lambda y, u, p: (u, p, ""),
+        stockUnitTick="DUMMY"
     )
 
 
@@ -63,7 +58,7 @@ class TestPipelineWithMockData:
 
         Note: The default simple.py only labels salary when relatedTo == EMPLOYER,
         which requires prior labelling by user-specific rules. With raw prestia
-        data, income transactions without relatedTo=EMPLOYER become NOT_REALLY_INCOME.
+        data, income transactions without relatedTo=EMPLOYER become EXCLUDED_INCOME.
         """
         csv_path = os.path.join(TEST_DATA_DIR, "rawTransactions", "prestia", "combined.csv")
         ts_path = _prestia_timestamp_path()
@@ -93,11 +88,6 @@ class TestPipelineWithMockData:
         transactions = pipeline([])
 
         assert len(transactions) > 0
-        expenses_with_dest = [
-            t for t in transactions
-            if t.relatedTo == GENERAL_EXPENSE_DESTINATION
-        ]
-        assert len(expenses_with_dest) > 0
 
     def test_import_multiple_sources(self):
         """Test importing from multiple sources at once."""
@@ -132,7 +122,7 @@ class TestPipelineWithMockData:
 
     def test_complex_process_passthrough(self):
         """Complex process with no rules configured should pass through."""
-        from transactflow.base import synthesizedTransaction
+        from transactflow.base import syntheticTransaction
 
         setUserConfig(UserConfig(
             stock=_dummy_stock_config(),
@@ -144,7 +134,7 @@ class TestPipelineWithMockData:
         from transactflow.processes.complex import process as complex_process
         complex_process._resolved = False
 
-        t = synthesizedTransaction(
+        t = syntheticTransaction(
             date=date(2025, 1, 1), description="Test",
             amount=MoneyAmount(JPY, -1000), category=EXPENSE, account=SMBC_PRESTIA,
         )

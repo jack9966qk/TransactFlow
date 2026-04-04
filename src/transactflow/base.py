@@ -26,8 +26,8 @@ __all__ = [
 
     # Category
     "Category", "ORDERED_BASE_CATEGORIES", "verifyCategoryLabelsUnique",
-    "EXPENSE", "RENT", "SOCIAL_SECURITY", "HELATH_INSURANCE",
-    "HELATH_INSURANCE_SALARY", "HELATH_INSURANCE_BONUS",
+    "EXPENSE", "RENT", "SOCIAL_SECURITY", "HEALTH_INSURANCE",
+    "HEALTH_INSURANCE_SALARY", "HEALTH_INSURANCE_BONUS",
     "WELFARE", "WELFARE_SALARY", "WELFARE_SALARY_FORECAST", "WELFARE_BONUS",
     "UNEMPL_INS", "UNEMPL_INS_SALARY", "UNEMPL_INS_BONUS",
     "MISC_INCOME_DEDUCTION", "MISC_INCOME_DEDUCTION_SALARY", "MISC_INCOME_DEDUCTION_BONUS",
@@ -47,7 +47,7 @@ __all__ = [
     "INCOME", "EARNED_INCOME", "SALARY", "SALARY_FORECAST",
     "NON_TAXABLE_SALARY", "NON_TAXABLE_SALARY_HOUSING_BENEFIT",
     "BONUS", "EQUITY_VESTING", "BANK_INTEREST", "CASH_BACK", "CAPITAL_GAIN",
-    "REFUND_REIMBURSEMENT", "NOT_REALLY_INCOME", "PENSION_CONTRIBUTION",
+    "REFUND_REIMBURSEMENT", "EXCLUDED_INCOME", "PENSION_CONTRIBUTION",
     "INTERNAL_TRANSFER", "UNPAIRED_INTERNAL_TRANSFER", "EXPECTED_INTERNAL_TRANSFER",
     "CURRENCY_CONVERSION_SENT", "CURRENCY_CONVERSION_RECEIVED", "SOURCE_CUTOFF",
 
@@ -57,14 +57,14 @@ __all__ = [
     "colorCodeForJPYAmount",
 
     # MoneyAmount
-    "formatQuantity", "MoneyAmount", "amonutDeltaIsNegligible", "EMPTY_AMOUNT",
+    "formatQuantity", "MoneyAmount", "amountDeltaIsNegligible", "EMPTY_AMOUNT",
     "amountsHaveSameCurrency", "sumSingleCurrencyAmounts", "SegmentedTotals",
 
     # ExchangeRates
     "ExchangeRates", "EMPTY_EXCHANGE_RATES",
 
     # Transaction
-    "Transaction", "synthesizedTransaction",
+    "Transaction", "syntheticTransaction",
     "simpleCSVForTransaction", "sumSingleCurrencyAdjustedAmounts",
     "printTransactionsAsCSV", "splitTransactions",
     "sourceLocationFromFrame", "makeSourceLocation", "makeManualTransactionFn",
@@ -148,9 +148,9 @@ ORDERED_BASE_CATEGORIES = [
 
     RENT := Category("Rent", parent=EXPENSE),
     SOCIAL_SECURITY := Category("Social security", parent=EXPENSE),
-    HELATH_INSURANCE := Category("Health Insurance", parent=SOCIAL_SECURITY),
-    HELATH_INSURANCE_SALARY := Category("Health Insurance for Salary", parent=HELATH_INSURANCE),
-    HELATH_INSURANCE_BONUS := Category("Health Insurance for Bonus", parent=HELATH_INSURANCE),
+    HEALTH_INSURANCE := Category("Health Insurance", parent=SOCIAL_SECURITY),
+    HEALTH_INSURANCE_SALARY := Category("Health Insurance for Salary", parent=HEALTH_INSURANCE),
+    HEALTH_INSURANCE_BONUS := Category("Health Insurance for Bonus", parent=HEALTH_INSURANCE),
     WELFARE := Category("Welfare", parent=SOCIAL_SECURITY),
     WELFARE_SALARY := Category("Welfare for Salary", parent=WELFARE),
     WELFARE_SALARY_FORECAST := Category("Welfare for Salary (forecast)", parent=WELFARE),
@@ -219,8 +219,8 @@ ORDERED_BASE_CATEGORIES = [
     CASH_BACK := Category("Cashback", parent=EARNED_INCOME),
     CAPITAL_GAIN := Category("Capital Gain", parent=EARNED_INCOME),
     REFUND_REIMBURSEMENT := Category("Refund/Reimbursement", parent=EARNED_INCOME),
-    NOT_REALLY_INCOME := Category("Not Really Income", parent=INCOME),
-    PENSION_CONTRIBUTION := Category("Pension contribution", parent=NOT_REALLY_INCOME),
+    EXCLUDED_INCOME := Category("Not Really Income", parent=INCOME),
+    PENSION_CONTRIBUTION := Category("Pension contribution", parent=EXCLUDED_INCOME),
 
     INTERNAL_TRANSFER := Category("Internal Transfer"),
     UNPAIRED_INTERNAL_TRANSFER := Category("Unpaired Internal Transfer"),
@@ -306,7 +306,7 @@ class MoneyAmount:
             case MoneyAmount(self.currency, self.quantity): return True
             case _: return False
 
-def amonutDeltaIsNegligible(delta: MoneyAmount) -> bool:
+def amountDeltaIsNegligible(delta: MoneyAmount) -> bool:
     if delta.currency == JPY:
         if abs(delta.quantity) > 100: return False
     elif delta.currency == USD:
@@ -378,7 +378,7 @@ class Transaction:
     """
 
     account: Account
-    originalFormat: str
+    rawRecord: str
     sourceLocation: Optional[Tuple[str, int]]
     category: Category
 
@@ -425,7 +425,7 @@ class Transaction:
             amountText = quantityArrow
         elif self.category.isUnder(EXPENSE):
             amountText = colored(quantityArrow, "red")
-        elif self.category.isUnder(NOT_REALLY_INCOME):
+        elif self.category.isUnder(EXCLUDED_INCOME):
             amountText = colored(quantityArrow, "green", attrs=["dark"])
         elif self.category.isUnder(INCOME):
             amountText = colored(quantityArrow, "green")
@@ -436,13 +436,13 @@ class Transaction:
         return f"<Transaction: {categoryLabel:20s} {self.date} " + \
                f"{self.account:>20s} {amountText} {relatedAcc:25s} {self.description}>"
 
-def synthesizedTransaction(
+def syntheticTransaction(
     date: Date,
     description: str,
     amount: MoneyAmount,
     category: Category,
     account: Account,
-    originalFormat: str = "",
+    rawRecord: str = "",
     sourceLocation: Optional[Tuple[str, int]] = None,
     relatedTo: Optional[Account] = None,
     isUnrealized: bool = False,
@@ -462,7 +462,7 @@ def synthesizedTransaction(
         rawAmount=rawAmount,
         category=category,
         account=account,
-        originalFormat=originalFormat,
+        rawRecord=rawRecord,
         sourceLocation=sourceLocation,
         adjustments=adjustments,
         relatedTo=relatedTo,
@@ -555,7 +555,7 @@ def makeManualTransactionFn(
             category=INCOME if quantity > 0 else EXPENSE,
             date=Date(year=year, month=month, day=day),
             description=description,
-            originalFormat="")
+            rawRecord="")
     return makeTransaction
 
 def isMainSalaryIncome(trans: Transaction):

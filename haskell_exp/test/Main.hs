@@ -35,7 +35,7 @@ mkTx p =
       description = p.desc,
       rawAmount = MoneyAmount jpy p.amount,
       account = p.fromAcct,
-      originalFormat = "",
+      rawRecord = "",
       sourceLocation = Nothing,
       category = p.cat,
       relatedTo = Nothing,
@@ -166,7 +166,7 @@ testTransaction = do
 
   -- synthesized transaction with amountIsRaw=False
   let synth =
-        synthesizedTransaction
+        syntheticTransaction
           defaultSynthesizedTx
             { synthDate = day 2025 3 1,
               synthDescription = "Synth",
@@ -181,7 +181,7 @@ testTransaction = do
 
   -- synthesized transaction with amountIsRaw=True
   let synthRaw =
-        synthesizedTransaction
+        syntheticTransaction
           defaultSynthesizedTx
             { synthDate = day 2025 3 1,
               synthDescription = "SynthRaw",

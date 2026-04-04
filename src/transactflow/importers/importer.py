@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from ..base import JPY, SOURCE_CUTOFF, Account, Date, MoneyAmount, Transaction, synthesizedTransaction
+from ..base import JPY, SOURCE_CUTOFF, Account, Date, MoneyAmount, Transaction, syntheticTransaction
 from typing import Any, Dict, Iterator, List, Callable, Optional, TextIO, Tuple, Union
 import itertools
 import csv
@@ -13,7 +13,7 @@ def readDateOfTimestampFile(path: str) -> Date:
 
 def addingCutoffTransactionTo(transactions: List[Transaction], date: Date, account: Account):
     return sortByDateAndMore(transactions + [
-        synthesizedTransaction(
+        syntheticTransaction(
             date=date,
             description=f"{account} data source cutoff",
             amount=MoneyAmount(JPY, 0),

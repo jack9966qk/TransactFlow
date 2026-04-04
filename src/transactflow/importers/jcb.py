@@ -1,7 +1,7 @@
 from calendar import c
 from dataclasses import dataclass
 import os
-from ..base import AMEX_JP, EXPECTED_INTERNAL_TRANSFER, JCB_CREDIT_CARD, EXPENSE, INCOME, JPY, SMBC_CREDIT_CARD, SOURCE_CUTOFF, MoneyAmount, Transaction, Date, sumSingleCurrencyAmounts, synthesizedTransaction
+from ..base import AMEX_JP, EXPECTED_INTERNAL_TRANSFER, JCB_CREDIT_CARD, EXPENSE, INCOME, JPY, SMBC_CREDIT_CARD, SOURCE_CUTOFF, MoneyAmount, Transaction, Date, sumSingleCurrencyAmounts, syntheticTransaction
 from ..retrieval.common import forEachFileToReadFrom
 from .importer import CsvImporter, RepaymentContext, addingCutoffTransactionTo, readDateOfTimestampFile
 from typing import List, Optional, TextIO, cast, Tuple
@@ -96,7 +96,7 @@ def readJcbCsv(filePath: str) -> List[Transaction]:
                     rawAmount=amount,
                     account=JCB_CREDIT_CARD,
                     category=EXPENSE if amount.quantity < 0 else INCOME,
-                    originalFormat=raw,
+                    rawRecord=raw,
                     sourceLocation=(filePath, lineNum),
                     comment=comment if len(c1 + c2) > 0 else None)
             case _:
@@ -110,14 +110,14 @@ def readJcbCsv(filePath: str) -> List[Transaction]:
     calculatedTotalAmount = sumSingleCurrencyAmounts(t.adjustedAmount for t in transactions)
     netTotal = calculatedTotalAmount + repaymentAmount
     if netTotal.quantity != 0:
-        expectedRepayments.append(synthesizedTransaction(
+        expectedRepayments.append(syntheticTransaction(
             date=repaymentDate - timedelta(days=30),
             amount=-netTotal,
             account=JCB_CREDIT_CARD,
             description=JCB_EXPECTED_MANUAL_REPAYMENT_DESCRIPTION,
             category=EXPECTED_INTERNAL_TRANSFER,
         ))
-    expectedRepayments.append(synthesizedTransaction(
+    expectedRepayments.append(syntheticTransaction(
         date=repaymentDate,
         amount=repaymentAmount,
         account=JCB_CREDIT_CARD,

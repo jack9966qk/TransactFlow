@@ -45,9 +45,9 @@ def forecastMonthlyTransactions(
                         category=cat,
                         transactions=transactions,
                         untilDate=Date(year=targetYear, month=lastestSalaryMonth, day=1))
-                    yield synthesizedTransaction(
+                    yield syntheticTransaction(
                         date=Date(year=targetYear, month=month, day=25),
-                        description=f"Synthesized forecasted {cat.label}",
+                        description=f"Synthetic forecasted {cat.label}",
                         amount=estimatedAmount,
                         category=cat,
                         account=PSEUDO_ACCOUNT,
@@ -58,7 +58,7 @@ def forecastMonthlyTransactions(
                 NON_TAXABLE_SALARY_HOUSING_BENEFIT,
                 NATIONAL_TAX_WITHHOLDING_SALARY,
                 WELFARE_SALARY,
-                HELATH_INSURANCE_SALARY,
+                HEALTH_INSURANCE_SALARY,
                 UNEMPL_INS_SALARY,
                 MISC_INCOME_DEDUCTION_SALARY,
                 PENSION_CONTRIBUTION,
@@ -102,9 +102,9 @@ def forecastMonthlyTransactions(
             }
             for cat, estimatedAmount in estimatedAmountForCategory.items():
                 for month in addForecastMonthRange:
-                    yield synthesizedTransaction(
+                    yield syntheticTransaction(
                         date=Date(year=targetYear, month=month, day=25),
-                        description=f"Synthesized forecasted {cat.label}",
+                        description=f"Synthetic forecasted {cat.label}",
                         amount=estimatedAmount,
                         category=cat,
                         account=PSEUDO_ACCOUNT,

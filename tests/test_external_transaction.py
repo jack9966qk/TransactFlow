@@ -15,7 +15,7 @@ def _makeTransaction(**overrides) -> Transaction:
         description="Groceries",
         rawAmount=MoneyAmount(JPY, -3000),
         account="SMBC Prestia",
-        originalFormat="prestia",
+        rawRecord="prestia",
         sourceLocation=("importers/prestia.py", 42),
         category=EXPENSE,
         relatedTo=None,
@@ -35,7 +35,7 @@ def _assertTransactionsEqual(a: Transaction, b: Transaction):
     assert a.rawAmount.currency == b.rawAmount.currency
     assert a.rawAmount.quantity == b.rawAmount.quantity
     assert a.account == b.account
-    assert a.originalFormat == b.originalFormat
+    assert a.rawRecord == b.rawRecord
     assert a.sourceLocation == b.sourceLocation
     assert a.relatedTo == b.relatedTo
     assert a.adjustments == b.adjustments

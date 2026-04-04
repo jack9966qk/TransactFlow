@@ -28,15 +28,15 @@ def exemptResult(reason: str): return InvariantResult(satisfied=None, reason=rea
 
 InvariantFn = Callable[[InvariantContext], InvariantResult]
 
-def multiCurrencyAmonutDeltaIsNegligible(delta: MultiCurrencyAmount) -> bool:
-    return all(amonutDeltaIsNegligible(MoneyAmount(c, q)) for c, q in delta.quantities.items())
+def multiCurrencyAmountDeltaIsNegligible(delta: MultiCurrencyAmount) -> bool:
+    return all(amountDeltaIsNegligible(MoneyAmount(c, q)) for c, q in delta.quantities.items())
 
 def totalAccountBalanceUnchanged(context: InvariantContext) -> InvariantResult:
     totalBefore = totalAccountBalance(context.before)
     totalAfter = totalAccountBalance(context.after)
 
     delta = totalAfter - totalBefore
-    satisfied = multiCurrencyAmonutDeltaIsNegligible(delta)
+    satisfied = multiCurrencyAmountDeltaIsNegligible(delta)
     deltaDescription = ", ".join(
         f"{cur}: {q}" for cur, q in delta.pruningZeroes().quantities.items())
 
