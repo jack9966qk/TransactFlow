@@ -94,10 +94,9 @@ class ImporterConfig:
 # Stock / Morgan Stanley config (parsing callbacks)
 # ---------------------------------------------------------------------------
 
-# TODO: Remove the global stock unit.
 @dataclass(frozen=True)
 class StockConfig:
-    stockUnit: StockUnit
+    stockUnits: frozenset[StockUnit]
 
 
 # ---------------------------------------------------------------------------

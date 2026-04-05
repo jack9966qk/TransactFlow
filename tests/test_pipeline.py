@@ -6,7 +6,7 @@ from datetime import date
 from transactflow.base import (
     EXPENSE, INCOME, SALARY, SMBC_PRESTIA, REVOLUT,
     JPY, MoneyAmount, Transaction, sortedByDate,
-    GENERAL_EXPENSE_DESTINATION,
+    GENERAL_EXPENSE_DESTINATION, StockUnit,
 )
 from transactflow.process import GroupedProcess
 from transactflow.processes.importer import ImporterProcess
@@ -31,7 +31,7 @@ def _revolut_timestamp_path():
 
 def _dummy_stock_config():
     return StockConfig(
-        stockUnitTick="DUMMY"
+        stockUnits=frozenset({StockUnit(label="DUMMY")})
     )
 
 

@@ -41,7 +41,7 @@ def toExternalTransaction(t: Transaction) -> pb.ExternalTransaction:
     """Convert a native Transaction to a protobuf ExternalTransaction."""
     protoDate = pb.Date(year=t.date.year, month=t.date.month, day=t.date.day)
     protoRawAmount = pb.MoneyAmount(
-        currency=pb.Currency(label=t.rawAmount.currency),
+        currency=pb.Currency(label=t.rawAmount.currency.label),
         quantity=t.rawAmount.quantity,
     )
     protoCategory = _categoryToProto(t.category)

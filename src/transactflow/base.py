@@ -14,6 +14,7 @@ __all__ = [
     "Account", "Date", "Currency",
 
     # Currency constants
+    "StockUnit",
     "JPY", "USD", "CNY", "EMPTY_CURRENCY",
 
     # Account constants

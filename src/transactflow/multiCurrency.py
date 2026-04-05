@@ -92,10 +92,13 @@ def embeddedOrLatestRatesFor(transaction: Transaction) -> Optional[ExchangeRates
         # if transaction.date <= Date.today():
             # print(f"WARNING: using latest rates for transaction at {transaction.date}")
         retrievedRates = getOrRetrieveLatestRates()
-        # Rates resolution for more than one global stock unit is not yet supported.
-        assert(retrievedRates.stockUnit == transaction.rawAmount.currency)
+        stockUnit = transaction.rawAmount.currency
+        assert isinstance(stockUnit, StockUnit)
+        assert stockUnit in retrievedRates.stockUnitUSDPrices, (
+            f"No retrieved rate for stock unit {stockUnit.label}"
+        )
         return ExchangeRates(
-            USDPerStockUnitShare=retrievedRates.USDPerStockUnitShare,
+            USDPerStockUnitShare=retrievedRates.stockUnitUSDPrices[stockUnit],
             USDJPYRate=retrievedRates.USDJPYRate
         )
     return rates

@@ -12,8 +12,7 @@ from .userConfig import forceReadUserConfig
 class RetrivedRates:
     JPYCNYRate: float
     USDJPYRate: float
-    stockUnit: StockUnit
-    USDPerStockUnitShare: float
+    stockUnitUSDPrices: dict[StockUnit, float]
     dateOfRetrieval: Date
 
     def rate(self, convertFrom: Currency, to: Currency) -> float:
@@ -23,13 +22,14 @@ class RetrivedRates:
         if convertFrom == USD and to == JPY:
             return self.USDJPYRate
         if isinstance(convertFrom, StockUnit):
-            if convertFrom != self.stockUnit:
-                # Rates resolution for more than one global stock unit is not yet supported.
-                assert(False)
+            assert convertFrom in self.stockUnitUSDPrices, (
+                f"No retrieved rate for stock unit {convertFrom.label}"
+            )
+            usdPerShare = self.stockUnitUSDPrices[convertFrom]
             if to == USD:
-                return self.USDPerStockUnitShare
+                return usdPerShare
             if to == JPY:
-                return self.USDPerStockUnitShare * self.USDJPYRate
+                return usdPerShare * self.USDJPYRate
         # Unsupported rates. TODO: add support.
         assert(False)
 
@@ -61,7 +61,7 @@ RATES_CACHE_PATH = "ratesCache.pickle"
 def getOrRetrieveLatestRates() -> RetrivedRates:
     stockConfig = forceReadUserConfig().stock
     assert(stockConfig is not None)
-    stockUnit = stockConfig.stockUnit
+    stockUnits = stockConfig.stockUnits
     rates: Optional[RetrivedRates] = None
     if os.path.exists(RATES_CACHE_PATH):
         with open(RATES_CACHE_PATH, "rb") as f:
@@ -71,18 +71,18 @@ def getOrRetrieveLatestRates() -> RetrivedRates:
     targetDay = today if now.hour > 4 else today - timedelta(days=1)
     if (
         rates is not None and
-        # Rates resolution for more than one global stock unit is not yet supported.
-        rates.stockUnit == stockUnit and 
+        set(rates.stockUnitUSDPrices.keys()) == set(stockUnits) and
         rates.dateOfRetrieval == targetDay
     ):
         return rates
-    ticker = stockUnit.label
-    stockPrice = yfinance.Ticker(ticker).history(period="1d")["Close"].iloc[-1]
+    stockUnitUSDPrices: dict[StockUnit, float] = {}
+    for unit in stockUnits:
+        price = yfinance.Ticker(unit.label).history(period="1d")["Close"].iloc[-1]
+        stockUnitUSDPrices[unit] = cast(float, price)
     rates = RetrivedRates(
         JPYCNYRate=currencyRate(JPY, CNY),
         USDJPYRate=currencyRate(USD, JPY),
-        stockUnit=stockUnit,
-        USDPerStockUnitShare=cast(float, stockPrice),
+        stockUnitUSDPrices=stockUnitUSDPrices,
         dateOfRetrieval=targetDay)
     with open(RATES_CACHE_PATH, "wb") as f:
         pickle.dump(rates, f)

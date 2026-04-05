@@ -19,8 +19,9 @@ def allCombined(includeTaxProcesses: bool) -> GroupedProcess:
         *_optionalProcess(
             mapOptional(config.processes, lambda c: c.complexProcess),
         ),
-        *_optionalProcess(
-            mapOptional(config.stock, lambda c: addCaptialGainProcess(c.stockUnit)),
+        *(
+            [addCaptialGainProcess(unit) for unit in config.stock.stockUnits]
+            if config.stock is not None else []
         ),
         makeForecastProcess(),
         *_optionalProcess(
