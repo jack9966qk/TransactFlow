@@ -1,7 +1,7 @@
 [project]
 name = "TransactFlow"
 version = "0.1.0"
-description = "A personal finance project"
+description = "A personal accounting system built around transactions"
 readme = "README.md"
 requires-python = ">=3.14"
 dependencies = [
