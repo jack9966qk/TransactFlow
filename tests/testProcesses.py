@@ -3,13 +3,11 @@ from .helpers import writeTransactionsWithStat
 from transactflow.base import *
 from transactflow.process import *
 from transactflow.analysis import totalAccountBalance
-from typing import Callable
-from dataclasses import replace
+from transactflow.processes.payslipAnnotationItem import PayslipAnnotationItem
 import transactflow.processes.importer
-import transactflow.processes.complex
-import transactflow.processes.tax
 import transactflow.processes.payslipIncome
 import transactflow.processes.runAll
+from typing import Callable
 
 PROCESS_OUTPUT_DIR = "test/processOutput"
 
@@ -31,36 +29,35 @@ InvariantFn = Callable[[InvariantContext], InvariantResult]
 def multiCurrencyAmountDeltaIsNegligible(delta: MultiCurrencyAmount) -> bool:
     return all(amountDeltaIsNegligible(MoneyAmount(c, q)) for c, q in delta.quantities.items())
 
-def totalAccountBalanceUnchanged(context: InvariantContext) -> InvariantResult:
-    totalBefore = totalAccountBalance(context.before)
-    totalAfter = totalAccountBalance(context.after)
+def makeTotalAccountBalanceUnchangedInvariant(
+    payslipAnnotations: List[PayslipAnnotationItem],
+) -> InvariantFn:
+    def totalAccountBalanceUnchanged(context: InvariantContext) -> InvariantResult:
+        totalBefore = totalAccountBalance(context.before)
+        totalAfter = totalAccountBalance(context.after)
 
-    delta = totalAfter - totalBefore
-    satisfied = multiCurrencyAmountDeltaIsNegligible(delta)
-    deltaDescription = ", ".join(
-        f"{cur}: {q}" for cur, q in delta.pruningZeroes().quantities.items())
+        delta = totalAfter - totalBefore
+        satisfied = multiCurrencyAmountDeltaIsNegligible(delta)
+        deltaDescription = ", ".join(
+            f"{cur}: {q}" for cur, q in delta.pruningZeroes().quantities.items())
 
-    def resultIfExempt() -> Optional[InvariantResult]:
-        process = context.processPath[-1]
-        if isinstance(process, transactflow.processes.importer.ImporterProcess):
-            return exemptResult("Net total can change normally with loader process")
-        if (
-            process == transactflow.processes.payslipIncome.applyPayslipAnnotations and
-            delta == transactflow.processes.payslipIncome.expectedTotalBalanceDelta()
-        ):
-            return exemptResult(f"Delta matches expected amount: {deltaDescription}")
-        # if process == transactflow.processes.tax.reprojectUnpaidLocalTaxTo2020:
-        #     return exemptResult("Estimated unpaid tax natually affects total")
-        # if process == transactflow.processes.tax.addRoughEstimationFor2021TaxPaidIn2022:
-        #     return exemptResult("Estimated unpaid tax natually affects total")
-        return None
+        def resultIfExempt() -> Optional[InvariantResult]:
+            process = context.processPath[-1]
+            if isinstance(process, transactflow.processes.importer.ImporterProcess):
+                return exemptResult("Net total can change normally with loader process")
+            if (
+                process.label == "applyPayslipAnnotations" and
+                delta == transactflow.processes.payslipIncome.expectedTotalBalanceDelta(payslipAnnotations)
+            ):
+                return exemptResult(f"Delta matches expected amount: {deltaDescription}")
+            return None
 
-    if not satisfied and ((exemptRes := resultIfExempt()) is not None):
-        return exemptRes
-    # if not satisfied: breakpoint()
+        if not satisfied and ((exemptRes := resultIfExempt()) is not None):
+            return exemptRes
 
-    reason = None if satisfied else f"Unexpected delta: {deltaDescription}"
-    return InvariantResult(satisfied, reason)
+        reason = None if satisfied else f"Unexpected delta: {deltaDescription}"
+        return InvariantResult(satisfied, reason)
+    return totalAccountBalanceUnchanged
 
 def printInvariantResults(invariantsWithResult: List[Tuple[InvariantFn,  InvariantResult]], process: Process):
     results = [r for _, r in invariantsWithResult]
@@ -93,7 +90,3 @@ def testGroupedProcess(groupedProcess: GroupedProcess,
         writeTransactionsWithStat(before, f"{PROCESS_OUTPUT_DIR}/{process.label}_before")
         writeTransactionsWithStat(after, f"{PROCESS_OUTPUT_DIR}/{process.label}_after")
         transactions = after
-
-if __name__ == "__main__":
-    allCombined = transactflow.processes.runAll.allCombined(includeTaxProcesses=True)
-    testGroupedProcess(allCombined, [], [totalAccountBalanceUnchanged])

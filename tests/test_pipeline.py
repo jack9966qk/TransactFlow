@@ -6,14 +6,10 @@ from datetime import date
 from transactflow.base import (
     EXPENSE, INCOME, SALARY, SMBC_PRESTIA, REVOLUT,
     JPY, MoneyAmount, Transaction, sortedByDate,
-    GENERAL_EXPENSE_DESTINATION, StockUnit,
+    GENERAL_EXPENSE_DESTINATION,
 )
 from transactflow.process import GroupedProcess
 from transactflow.processes.importer import ImporterProcess
-from transactflow.userConfig import (
-    ImporterConfig, PrestiaPaths, RevolutPaths, StockConfig, ProcessConfig,
-    ForecastConfig, UserConfig, setUserConfig,
-)
 from transactflow.importers.prestia import readPrestiaCsv
 from transactflow.importers.revolut import readRevolutCsv
 
@@ -29,10 +25,6 @@ def _revolut_timestamp_path():
     return os.path.join(TEST_DATA_DIR, "rawTransactions", "revolut", "last_update_time")
 
 
-def _dummy_stock_config():
-    return StockConfig(
-        stockUnits=frozenset({StockUnit(label="DUMMY")})
-    )
 
 
 class TestPipelineWithMockData:
@@ -62,15 +54,6 @@ class TestPipelineWithMockData:
         """
         csv_path = os.path.join(TEST_DATA_DIR, "rawTransactions", "prestia", "combined.csv")
         ts_path = _prestia_timestamp_path()
-
-        setUserConfig(UserConfig(
-            stock=_dummy_stock_config(),
-            importers=ImporterConfig(
-                prestia=PrestiaPaths(csvPath=csv_path, timestampPath=ts_path),
-            ),
-            processes=ProcessConfig(),
-            forecast=ForecastConfig(targetYear=2025),
-        ))
 
         pipeline = GroupedProcess(label="Test pipeline", processes=[
             ImporterProcess(
@@ -117,13 +100,6 @@ class TestPipelineWithMockData:
     def test_complex_process_passthrough(self):
         """Complex process with no rules configured should pass through."""
         from transactflow.base import syntheticTransaction
-
-        setUserConfig(UserConfig(
-            stock=_dummy_stock_config(),
-            importers=ImporterConfig(),
-            processes=ProcessConfig(),
-            forecast=ForecastConfig(targetYear=2025),
-        ))
 
         t = syntheticTransaction(
             date=date(2025, 1, 1), description="Test",

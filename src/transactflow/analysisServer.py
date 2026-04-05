@@ -1,18 +1,19 @@
 from flask import Flask, Response, request
 import json
 from .serialization import ConvertObject, categoryForLabel, CategoryKeysToLabels
+from .userConfig import UserConfig
 
 app = Flask(__name__)
 
-# Initialize analysis provider.
-from .processes.runAll import run
-trans = run()
+def initProvider(config: UserConfig):
+    global provider
+    from .processes.runAll import run
+    trans = run(config)
+    from .analysis import AnalysisProvider
+    assert config.stock is not None
+    provider = AnalysisProvider(trans, config)
 
-from .base import splitIntoTimeSectionsBySalaryIncome
-groups, _ = splitIntoTimeSectionsBySalaryIncome(trans)
-
-from .analysis import AnalysisProvider, AnalysisProviderOptions, DeductIncomeOption, SegmentedDisplayOption
-provider = AnalysisProvider(trans, groups)
+from .analysis import AnalysisProviderOptions, DeductIncomeOption, SegmentedDisplayOption
 
 def JSONResponse(obj):
     return Response(json.dumps(obj, default=ConvertObject),

@@ -6,7 +6,6 @@ import os
 import yfinance
 from .base import Date, Currency, JPY, USD, CNY, StockUnit
 from .base import memo  # type: ignore
-from .userConfig import forceReadUserConfig
 
 @dataclass(frozen=True)
 class RetrivedRates:
@@ -56,36 +55,32 @@ def currencyRate(fromCur: Currency, toCur: Currency) -> float:
     return responseJson["conversion_rate"]
 
 RATES_CACHE_PATH = "ratesCache.pickle"
+
 # Also cache in memory, so that the file is only read once
-@memo
-def getOrRetrieveLatestRates() -> RetrivedRates:
-    stockConfig = forceReadUserConfig().stock
-    assert(stockConfig is not None)
-    stockUnits = stockConfig.stockUnits
-    rates: Optional[RetrivedRates] = None
-    if os.path.exists(RATES_CACHE_PATH):
+RATES_IN_MEMORY: Optional[RetrivedRates] = None
+
+def getOrRetrieveLatestRates(stockUnits: frozenset[StockUnit]) -> RetrivedRates:
+    global RATES_IN_MEMORY
+    if RATES_IN_MEMORY is None and os.path.exists(RATES_CACHE_PATH):
         with open(RATES_CACHE_PATH, "rb") as f:
-            rates = pickle.load(f)
+            RATES_IN_MEMORY = pickle.load(f)
     now = datetime.now()
     today = Date(year=now.year, month=now.month, day=now.day)
     targetDay = today if now.hour > 4 else today - timedelta(days=1)
-    if (
-        rates is not None and
-        set(rates.stockUnitUSDPrices.keys()) == set(stockUnits) and
-        rates.dateOfRetrieval == targetDay
-    ):
-        return rates
+    if RATES_IN_MEMORY is not None and RATES_IN_MEMORY.dateOfRetrieval == targetDay:
+        if len(stockUnits - frozenset(RATES_IN_MEMORY.stockUnitUSDPrices.keys())) > 0:
+            assert False, "Using cached rates but it does not contain the requested stock units"
+        return RATES_IN_MEMORY
+    # Retrieve rates
     stockUnitUSDPrices: dict[StockUnit, float] = {}
     for unit in stockUnits:
         price = yfinance.Ticker(unit.label).history(period="1d")["Close"].iloc[-1]
         stockUnitUSDPrices[unit] = cast(float, price)
-    rates = RetrivedRates(
+    RATES_IN_MEMORY = RetrivedRates(
         JPYCNYRate=currencyRate(JPY, CNY),
         USDJPYRate=currencyRate(USD, JPY),
         stockUnitUSDPrices=stockUnitUSDPrices,
         dateOfRetrieval=targetDay)
     with open(RATES_CACHE_PATH, "wb") as f:
-        pickle.dump(rates, f)
-    return rates
-
-
+        pickle.dump(RATES_IN_MEMORY, f)
+    return RATES_IN_MEMORY

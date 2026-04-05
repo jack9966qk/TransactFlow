@@ -3,7 +3,7 @@ from ..base import *
 from datetime import timedelta
 from ..multiCurrency import totalAdjustedAmountAsJPY
 from ..process import GroupedProcess, Process, funcProcess, sortByDateAndMore
-from ..userConfig import forceReadUserConfig
+from ..userConfig import ForecastConfig
 
 def forecastMonthlyTransactions(
     targetYear: int
@@ -117,11 +117,7 @@ def forecastMonthlyTransactions(
     return addMonthlyTransactions
 
 
-def _buildForecastProcesses() -> List[Process]:
-    config = forceReadUserConfig().forecast
-    if config is None: return []
-    return [forecastMonthlyTransactions(targetYear=config.targetYear)]
-
-
-def makeProcess() -> GroupedProcess:
-    return GroupedProcess(label="Forecast", processes=_buildForecastProcesses())
+def makeProcess(config: ForecastConfig) -> GroupedProcess:
+    return GroupedProcess(label="Forecast", processes=[
+        forecastMonthlyTransactions(targetYear=config.targetYear),
+    ])

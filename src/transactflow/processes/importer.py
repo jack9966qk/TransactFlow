@@ -15,7 +15,7 @@ from ..importers.importer import addingCutoffTransactionTo
 
 from ..base import *
 from ..process import EVERYTHING, GroupedProcess, Process, labelIfMatch
-from ..userConfig import forceReadUserConfig
+from ..userConfig import ImporterConfig, MorganStanleyImportConfig
 
 
 class ImporterProcess(Process):
@@ -45,9 +45,7 @@ class ImporterProcess(Process):
         return sortedByDate(transactions + newTs)
 
 
-def _buildImporterProcesses() -> List[Process]:
-    config = forceReadUserConfig().importers
-    if config is None: return []
+def _buildImporterProcesses(config: ImporterConfig) -> List[Process]:
 
     processes: List[Process] = []
 
@@ -118,13 +116,7 @@ def _buildImporterProcesses() -> List[Process]:
         processes.append(ImporterProcess(
             label="Import Morgan Stanley",
             account=MORGAN_STANLEY,
-            readFromSource=lambda m=ms: readMorganStanleyCsv(
-                statementFilePath=m.equityStatementPath,
-                unvestedFilePath=m.equityUnvestedPath,
-                includeUnvested=True,
-                withdrawReportFilePath=m.withdrawPath,
-                usdJpyRateAtDate=m.usdJpyRateAtDate,
-            ),
+            readFromSource=lambda m=ms: readMorganStanleyCsv(m),
         ))
 
     if (agc := config.amazonGiftCard) is not None:
@@ -151,5 +143,5 @@ def _buildImporterProcesses() -> List[Process]:
     return processes
 
 
-def makeProcess() -> GroupedProcess:
-    return GroupedProcess(label="Import", processes=_buildImporterProcesses())
+def makeProcess(config: ImporterConfig) -> GroupedProcess:
+    return GroupedProcess(label="Import", processes=_buildImporterProcesses(config))

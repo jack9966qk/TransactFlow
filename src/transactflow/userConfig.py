@@ -1,4 +1,4 @@
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import Callable, Dict, List, Optional, Tuple
 
 from .base import Date, StockUnit, Transaction
@@ -138,15 +138,3 @@ class UserConfig:
     importers: Optional[ImporterConfig] = None
     processes: Optional[ProcessConfig] = None
     forecast: Optional[ForecastConfig] = None
-
-
-USER_CONFIG: Optional[UserConfig] = None
-
-def setUserConfig(config: UserConfig):
-    global USER_CONFIG
-    USER_CONFIG = config
-
-def forceReadUserConfig() -> UserConfig:
-    config = USER_CONFIG
-    assert config is not None, "UserConfig has not been set. Call setUserConfig() first."
-    return config

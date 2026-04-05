@@ -58,8 +58,7 @@ config = UserConfig(
         ])
     )
 )
-setUserConfig(config)
-print(netWorthReport(runner.run()))
+print(netWorthReport(runner.run(config)))
 ```
 
 ## Design

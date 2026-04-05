@@ -3,7 +3,6 @@ from functools import reduce
 from typing import Iterable, Optional
 
 from .base import *
-from .base import StockUnit
 from .rates import getOrRetrieveLatestRates
 
 @dataclass(frozen=True)
@@ -46,7 +45,8 @@ class MultiCurrencyAmount:
         })
 
     def aggregatedUsingLatestRatesAs(self, currency: Currency) -> float:
-        rates = getOrRetrieveLatestRates()
+        stockUnits = frozenset([currency]) if isinstance(currency, StockUnit) else frozenset()
+        rates = getOrRetrieveLatestRates(stockUnits)
         amount = 0
         for c, q in self.quantities.items():
             amount += rates.rate(convertFrom=c, to=currency) * q
@@ -91,14 +91,14 @@ def embeddedOrLatestRatesFor(transaction: Transaction) -> Optional[ExchangeRates
     ):
         # if transaction.date <= Date.today():
             # print(f"WARNING: using latest rates for transaction at {transaction.date}")
-        retrievedRates = getOrRetrieveLatestRates()
-        stockUnit = transaction.rawAmount.currency
-        assert isinstance(stockUnit, StockUnit)
-        assert stockUnit in retrievedRates.stockUnitUSDPrices, (
-            f"No retrieved rate for stock unit {stockUnit.label}"
-        )
+        currency = transaction.rawAmount.currency
+        stockUnits = frozenset([currency]) if isinstance(currency, StockUnit) else frozenset()
+        retrievedRates = getOrRetrieveLatestRates(frozenset(stockUnits))
         return ExchangeRates(
-            USDPerStockUnitShare=retrievedRates.stockUnitUSDPrices[stockUnit],
+            USDPerStockUnitShare=(
+                retrievedRates.stockUnitUSDPrices[currency]
+                if isinstance(currency, StockUnit) else None
+            ),
             USDJPYRate=retrievedRates.USDJPYRate
         )
     return rates

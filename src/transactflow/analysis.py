@@ -1,11 +1,13 @@
 from collections import defaultdict
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from datetime import timedelta
 from enum import Enum
+
+from transactflow.userConfig import UserConfig
 from .rates import RetrivedRates, getOrRetrieveLatestRates
 from .base import *
 from .multiCurrency import MultiCurrencyAmount, embeddedOrLatestRatesFor, sumCurrencyAmounts, amountInJPY, totalAdjustedAmount, totalAdjustedAmountAsJPY, totalRawAmount, totalRawAmountAsJPY
-from typing import Callable, DefaultDict, FrozenSet, Generator, List, Dict, Optional, Set, Tuple, TypeVar, Union, cast
+from typing import Callable, DefaultDict, FrozenSet, Generator, Iterable, List, Dict, Optional, Set, Tuple, TypeVar, Union, cast
 from collections import OrderedDict
 from .processes.sharedMatchings import *
 import itertools
@@ -776,7 +778,7 @@ class AnalysisProvider:
     categories: List[AnnotatedCategory]
     rates: RetrivedRates
 
-    def __init__(self, transactions: List[Transaction]):
+    def __init__(self, transactions: List[Transaction], config: UserConfig):
         salarySectionedGroups, _ = splitIntoTimeSectionsBySalaryIncome(transactions)
         if len(salarySectionedGroups) > 0:
             lastSalarySection = salarySectionedGroups.pop()
@@ -809,7 +811,13 @@ class AnalysisProvider:
             [AnnotatedCategory(c, isForecast=False) for c in reorderedCategories] +
             [AnnotatedCategory(c, isForecast=True) for c in reorderedCategories]
         )
-        self.rates = getOrRetrieveLatestRates()
+
+        if (stockConfig := config.stock) is not None:
+            stockUnits = stockConfig.stockUnits
+        else:
+            currencies = frozenset(t.rawAmount.currency for t in transactions)
+            stockUnits = frozenset(c for c in currencies if isinstance(c, StockUnit))
+        self.rates = getOrRetrieveLatestRates(stockUnits)
 
     def matchingTransactions(self, options: AnalysisProviderOptions) -> List[Transaction]:
         return options.filter.matchingTransactions(self.labels, self.labelsToGroups)
@@ -890,10 +898,10 @@ class AnalysisProvider:
             if "Ａｐｐｌｅ　Ｓｔｏｒｅ" in t.description: return "Apple Store"
             if "Ａｐｐｌｅ  Ｓｔｏｒｅ" in t.description: return "Apple Store"
             if "東京電力" in t.description: return "東京電力"
-            if isTaxi(t): return "Taxi"
-            if isMenu(t): return "Menu"
-            if isUberEats(t): return "Uber Eats"
-            if isAmazon(t): return "Amazon"
+            # if isTaxi(t): return "Taxi"
+            # if isMenu(t): return "Menu"
+            # if isUberEats(t): return "Uber Eats"
+            # if isAmazon(t): return "Amazon"
             return t.description
         namesToTotals: dict = {}
         for t in selectedTrans:
