@@ -26,7 +26,7 @@ __all__ = [
     "funcMapping", "writeCatIf",
 
     # Process
-    "Process", "FunctionProcess", "GroupedProcess", "LazyGroupedProcess",
+    "Process", "FunctionProcess", "GroupedProcess",
     "ReplacementProcess",
     "breakpointProcess", "funcProcess", "funcProcessWrapper", "groupedProcessWrapper",
     "filterProc", "mapProc",
@@ -224,35 +224,6 @@ class GroupedProcess(Process):
     def printTree(self):
         for path in self.iterateDescedants(leafOnly=False, expandAtomic=False):
             print("    " * (len(path) - 1) + path[-1].label)
-
-class LazyGroupedProcess(GroupedProcess):
-    """A GroupedProcess that defers process list construction to first use.
-
-    Needed because module-level process variables are evaluated at import time,
-    but UserConfig is set later via setUserConfig().
-
-    Uses a property for `processes` so that resolution is triggered even when a
-    parent GroupedProcess accesses `.processes` directly during iteration.
-    """
-    _buildProcesses: Callable[[], List["Process"]]
-    _resolved: bool
-    _processes_list: List["Process"]
-
-    def __init__(self, label: str, buildProcesses: Callable[[], List["Process"]], atomic: bool = False):
-        super().__init__(label=label, atomic=atomic, processes=[])
-        self._buildProcesses = buildProcesses
-        self._resolved = False
-
-    @property  # type: ignore[override]
-    def processes(self) -> List["Process"]:
-        if not self._resolved:
-            self._processes_list = self._buildProcesses()
-            self._resolved = True
-        return self._processes_list
-
-    @processes.setter
-    def processes(self, value: List["Process"]):
-        self._processes_list = value
 
 
 def breakpointProcess(*args) -> Process:

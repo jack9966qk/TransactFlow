@@ -1,22 +1,24 @@
-from ..process import GroupedProcess, breakpointProcess, moveSalaryToFirstOfDay, sortByDateAndMore
+from ..process import GroupedProcess, Process, moveSalaryToFirstOfDay, sortByDateAndMore
 from ..base import *
-import transactflow.processes.importer
-import transactflow.processes.simple
-import transactflow.processes.complex
-import transactflow.processes.tax
-import transactflow.processes.capitalGain
-import transactflow.processes.forecast
-from typing import List
+from ..userConfig import forceReadUserConfig
+from .importer import makeProcess as makeImporterProcess
+from .capitalGain import process as capitalGainProcess
+from .forecast import makeProcess as makeForecastProcess
+from typing import List, Optional
+
+def _optionalProcess(proc: Optional["Process"]) -> List["Process"]:
+    return [proc] if proc is not None else []
 
 def allCombined(includeTaxProcesses: bool) -> GroupedProcess:
+    config = forceReadUserConfig().processes
     return GroupedProcess(label="All processes", processes=[
-        transactflow.processes.importer.process,
-        transactflow.processes.simple.process,
-        transactflow.processes.complex.process,
-        transactflow.processes.capitalGain.process,
-        transactflow.processes.forecast.process,
+        makeImporterProcess(),
+        *_optionalProcess(config.simpleProcess if config else None),
+        *_optionalProcess(config.complexProcess if config else None),
+        capitalGainProcess,
+        makeForecastProcess(),
     ] + (
-        [transactflow.processes.tax.process] if includeTaxProcesses else []
+        _optionalProcess(config.taxProcess if config else None) if includeTaxProcesses else []
     ) + [
         sortByDateAndMore,
         moveSalaryToFirstOfDay
@@ -25,12 +27,3 @@ def allCombined(includeTaxProcesses: bool) -> GroupedProcess:
 def run(includeTaxProcesses: bool = True, progress = True) -> List[Transaction]:
     return allCombined(includeTaxProcesses=includeTaxProcesses)([], progress=progress)
 
-def runImporterOnly() -> List[Transaction]:
-    return transactflow.processes.importer.process([])
-
-def runImporterAndSimple() -> List[Transaction]:
-    process = GroupedProcess(label="All transactions", processes=[
-        transactflow.processes.importer.process,
-        transactflow.processes.simple.process
-    ])
-    return process([])

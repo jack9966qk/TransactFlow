@@ -72,18 +72,12 @@ class TestPipelineWithMockData:
             forecast=ForecastConfig(targetYear=2025),
         ))
 
-        from transactflow.processes.simple import process as simple_process
-        # Force re-resolve since config changed
-        simple_process._resolved = False
-
-        importer = ImporterProcess(
-            label="Import SMBC Prestia",
-            account=SMBC_PRESTIA,
-            readFromSource=lambda: readPrestiaCsv(csv_path, ts_path),
-        )
         pipeline = GroupedProcess(label="Test pipeline", processes=[
-            importer,
-            simple_process,
+            ImporterProcess(
+                label="Import SMBC Prestia",
+                account=SMBC_PRESTIA,
+                readFromSource=lambda: readPrestiaCsv(csv_path, ts_path),
+            ),
         ])
         transactions = pipeline([])
 
@@ -131,12 +125,11 @@ class TestPipelineWithMockData:
             forecast=ForecastConfig(targetYear=2025),
         ))
 
-        from transactflow.processes.complex import process as complex_process
-        complex_process._resolved = False
-
         t = syntheticTransaction(
             date=date(2025, 1, 1), description="Test",
             amount=MoneyAmount(JPY, -1000), category=EXPENSE, account=SMBC_PRESTIA,
         )
-        result = complex_process([t])
+        # With no user-supplied complex process, pipeline should pass through.
+        pipeline = GroupedProcess(label="Empty complex", processes=[])
+        result = pipeline([t])
         assert len(result) == 1

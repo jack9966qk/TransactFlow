@@ -1,8 +1,7 @@
 from asyncio import threads
-from typing import List
+from typing import Callable, List
 from ..taxSummary import AmountsByTaxType, yearlyTaxSummaryFromTransactions
-from ..process import GroupedProcess, LazyGroupedProcess, Process, TaxRedistributionConfig, addTaxAdjustments, collectAndDistributeTax, funcProcess, funcProcessWrapper, matching, satisfyAny
-from ..userConfig import forceReadUserConfig
+from ..process import GroupedProcess, Process, TaxRedistributionConfig, addTaxAdjustments, collectAndDistributeTax, funcProcess, funcProcessWrapper, matching, satisfyAny
 from ..base import *
 
 """
@@ -339,11 +338,3 @@ def processesReprojectingTaxFinalized(
     ]
 
 
-def _buildTaxProcesses() -> List[Process]:
-    config = forceReadUserConfig().processes
-    if config is None: return []
-    userSupplied = config.taxProcess
-    return [] if userSupplied is None else [userSupplied]
-
-
-process = LazyGroupedProcess(label="Tax reprojection", buildProcesses=_buildTaxProcesses)

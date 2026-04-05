@@ -1,8 +1,8 @@
-from typing import List
+from typing import Generator, List
 from ..base import *
 from datetime import timedelta
 from ..multiCurrency import totalAdjustedAmountAsJPY
-from ..process import Process, funcProcess, sortByDateAndMore, LazyGroupedProcess
+from ..process import GroupedProcess, Process, funcProcess, sortByDateAndMore
 from ..userConfig import forceReadUserConfig
 
 def forecastMonthlyTransactions(
@@ -123,4 +123,5 @@ def _buildForecastProcesses() -> List[Process]:
     return [forecastMonthlyTransactions(targetYear=config.targetYear)]
 
 
-process = LazyGroupedProcess(label="Forecast", buildProcesses=_buildForecastProcesses)
+def makeProcess() -> GroupedProcess:
+    return GroupedProcess(label="Forecast", processes=_buildForecastProcesses())

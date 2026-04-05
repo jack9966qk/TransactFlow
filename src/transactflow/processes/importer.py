@@ -1,4 +1,4 @@
-from typing import Callable, List
+from typing import Callable, List, Optional
 
 from ..importers.amazonGiftCard import annotateAmazonGiftCardTransactions
 from ..importers.amexJp import readAmexJpCsvFiles
@@ -14,7 +14,7 @@ from ..importers.importer import addingCutoffTransactionTo
 
 
 from ..base import *
-from ..process import EVERYTHING, LazyGroupedProcess, Process, labelIfMatch
+from ..process import EVERYTHING, GroupedProcess, Process, labelIfMatch
 from ..userConfig import forceReadUserConfig
 
 
@@ -151,4 +151,5 @@ def _buildImporterProcesses() -> List[Process]:
     return processes
 
 
-process = LazyGroupedProcess(label="Import", buildProcesses=_buildImporterProcesses)
+def makeProcess() -> GroupedProcess:
+    return GroupedProcess(label="Import", processes=_buildImporterProcesses())
