@@ -39,13 +39,13 @@ if [[ ! "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
 fi
 
 # Ensure working copy has no uncommitted changes
-if jj diff --stat | grep -q .; then
+if [[ -n "$(jj diff)" ]]; then
     echo "Error: working copy has uncommitted changes. Commit or squash first." >&2
     exit 1
 fi
 
 # Determine the release revision: if @ is empty, use @- (the parent)
-if jj log -r @ --no-graph -T 'empty'; then
+if [[ "$(jj log -r @ --no-graph -T 'empty')" == "true" ]]; then
     RELEASE_REV="@-"
 else
     RELEASE_REV="@"
@@ -70,9 +70,9 @@ fi
 
 echo "Creating release $TAG..."
 
-# Create tag and push to remote
-jj tag create "$TAG" -r "$RELEASE_REV"
-jj git push --remote origin --tag "$TAG"
+# Create tag and push via git (jj git push doesn't support tags)
+jj tag set "$TAG" -r "$RELEASE_REV"
+git push origin "refs/tags/$TAG"
 
 # Create GitHub release
 gh release create "$TAG" \
