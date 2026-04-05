@@ -13,13 +13,13 @@ A personal accounting system designed to be:
 TransactFlow requires Python 3.14+. Install directly from GitHub:
 
 ```bash
-pip install git+https://github.com/jack9966qk/TransactFlow.git@0.1.0
+pip install git+https://github.com/jack9966qk/TransactFlow.git@0.2.0
 ```
 
 Or with [uv](https://docs.astral.sh/uv/):
 
 ```bash
-uv add git+https://github.com/jack9966qk/TransactFlow.git --tag 0.1.0
+uv add git+https://github.com/jack9966qk/TransactFlow.git --tag 0.2.0
 ```
 
 ### Example
