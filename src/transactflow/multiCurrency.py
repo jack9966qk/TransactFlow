@@ -3,6 +3,7 @@ from functools import reduce
 from typing import Iterable, Optional
 
 from .base import *
+from .base import StockUnit
 from .rates import getOrRetrieveLatestRates
 
 @dataclass(frozen=True)
@@ -33,8 +34,8 @@ class MultiCurrencyAmount:
     @property
     def longDescription(self) -> str:
         if len(self.quantities) == 0: return f"{'Empty':>10}"
-        sortedCurrencies = sorted(set(c for c in self.quantities.keys()))
-        return "\n".join(f"{c:>10}: {self.quantities[c]:,.2f}" for c in sortedCurrencies)
+        sortedCurrencies = sorted(set(c for c in self.quantities.keys()), key=lambda c: c.label)
+        return "\n".join(f"{c.label:>10}: {self.quantities[c]:,.2f}" for c in sortedCurrencies)
 
     def addingAmount(self, amount: MoneyAmount) -> "MultiCurrencyAmount":
         return self + MultiCurrencyAmount({amount.currency: amount.quantity})
@@ -70,7 +71,7 @@ def totalAdjustedAmount(transactions: Iterable[Transaction]) -> MultiCurrencyAmo
 def amountInJPY(amount: MoneyAmount, exchangeRates: Optional[ExchangeRates] = None) -> float:
     if amount.currency == JPY: return amount.quantity
     assert(exchangeRates is not None)
-    if amount.currency == STOCK_UNIT:
+    if isinstance(amount.currency, StockUnit):
         assert((USDJPYRate := exchangeRates.USDJPYRate) is not None)
         assert((USDPerShare := exchangeRates.USDPerStockUnitShare) is not None)
         return USDPerShare * USDJPYRate * amount.quantity
@@ -85,12 +86,14 @@ def embeddedOrLatestRatesFor(transaction: Transaction) -> Optional[ExchangeRates
     if (
         rates.USDJPYRate is None and
         rates.USDPerStockUnitShare is None and
-        transaction.rawAmount.currency == STOCK_UNIT
+        isinstance(transaction.rawAmount.currency, StockUnit)
         # and transaction.date > Date.today()
     ):
         # if transaction.date <= Date.today():
             # print(f"WARNING: using latest rates for transaction at {transaction.date}")
         retrievedRates = getOrRetrieveLatestRates()
+        # Rates resolution for more than one global stock unit is not yet supported.
+        assert(retrievedRates.stockUnit == transaction.rawAmount.currency)
         return ExchangeRates(
             USDPerStockUnitShare=retrievedRates.USDPerStockUnitShare,
             USDJPYRate=retrievedRates.USDJPYRate

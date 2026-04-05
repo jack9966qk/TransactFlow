@@ -1,15 +1,15 @@
-from typing import Iterator, Generator
+from typing import Iterator, Generator, List
 
 from ..base import *
-from ..process import Process, funcProcess, groupedProcessWrapper, sortByDateAndMore
+from ..base import StockUnit
+from ..process import Process, funcProcess, sortByDateAndMore
 from ..capitalGainCalculation import Activity, Vest, Sell, genCapitalGain
 
-@groupedProcessWrapper(atomic=False)
-def process() -> List[Process]:
+def addCaptialGainProcess(stockUnit: StockUnit) -> Process:
     @funcProcess()
     def addCapitalGain(transactions: List[Transaction]) -> List[Transaction]:
         def genTransactions(iterator: Iterator[Transaction]) -> Generator[Transaction, None, None]:
-            # There is a trade of between calculating this in USD and in JPY. Delta in USD is a
+            # There is a trade off between calculating this in USD and in JPY. Delta in USD is a
             # better match for reality, but Japan tax for capital gain is measured using JPY prices
             # at each activity, even though it may capture unrealized gain/loss from USDJPY
             # conversions.
@@ -25,7 +25,7 @@ def process() -> List[Process]:
                 USDJPYRate = rates.USDJPYRate
                 if (
                     transaction.category == EQUITY_VESTING and
-                    transaction.rawAmount.currency == STOCK_UNIT
+                    transaction.rawAmount.currency == stockUnit
                 ):
                     assert(USDPerShare is not None)
                     assert(USDJPYRate is not None)
@@ -39,7 +39,7 @@ def process() -> List[Process]:
                     assert(empty is None)
                 elif (
                     transaction.category == CURRENCY_CONVERSION_SENT and
-                    transaction.rawAmount.currency == STOCK_UNIT
+                    transaction.rawAmount.currency == stockUnit
                 ):
                     assert(USDPerShare is not None)
                     assert(USDJPYRate is not None)
@@ -69,4 +69,4 @@ def process() -> List[Process]:
         result = list(genTransactions(iterator))
         # breakpoint()
         return result
-    return [addCapitalGain]
+    return addCapitalGain

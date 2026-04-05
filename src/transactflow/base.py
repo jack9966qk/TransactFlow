@@ -14,7 +14,7 @@ __all__ = [
     "Account", "Date", "Currency",
 
     # Currency constants
-    "JPY", "USD", "CNY", "STOCK_UNIT", "EMPTY_CURRENCY",
+    "JPY", "USD", "CNY", "EMPTY_CURRENCY",
 
     # Account constants
     "ORDERED_ACCOUNTS",
@@ -261,12 +261,19 @@ def colorCodeForJPYAmount(amount: float):
         a = min(a, 1.0)
         return f"rgba({c.r}, {c.g}, {c.b}, {a})"
 
-Currency = NewType("Currency", str)
+@dataclass(frozen=True, order=True)
+class Currency:
+    label: str
+
 JPY = Currency("JPY")
 USD = Currency("USD")
 CNY = Currency("CNY")
-STOCK_UNIT = Currency("STOCK_UNIT")
+
 EMPTY_CURRENCY = Currency("Empty Currency")
+
+@dataclass(frozen=True, order=True)
+class StockUnit(Currency):
+    pass
 
 def formatQuantity(quantity: float) -> str:
     return f"{quantity:.4f}".rstrip("0").rstrip(".")
@@ -277,7 +284,7 @@ class MoneyAmount:
     quantity: float
 
     def __str__(self):
-        return f"{formatQuantity(self.quantity)} {self.currency}"
+        return f"{formatQuantity(self.quantity)} {self.currency.label}"
 
     def __add__(self, other: "MoneyAmount"):
         if self.currency == EMPTY_CURRENCY: return other
@@ -311,7 +318,7 @@ def amountDeltaIsNegligible(delta: MoneyAmount) -> bool:
         if abs(delta.quantity) > 100: return False
     elif delta.currency == USD:
         if abs(delta.quantity) > 1: return False
-    elif delta.currency == STOCK_UNIT:
+    elif isinstance(delta.currency, StockUnit):
         if abs(delta.quantity) > 0.1: return False
     elif abs(delta.quantity) > 0: return False
     return True

@@ -2,9 +2,9 @@
 
 from datetime import date
 from transactflow.base import (
-    Category, Transaction, MoneyAmount, ExchangeRates,
-    EXPENSE, INCOME, SALARY, JPY, USD, STOCK_UNIT,
-    EMPTY_AMOUNT, EMPTY_EXCHANGE_RATES, EMPTY_CURRENCY,
+    Transaction, MoneyAmount,
+    EXPENSE, INCOME, SALARY, JPY, USD,
+    EMPTY_AMOUNT,
     SMBC_PRESTIA, EMPLOYER,
     syntheticTransaction, sortedByDate,
     sumSingleCurrencyAmounts, amountsHaveSameCurrency,

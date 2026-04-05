@@ -2,7 +2,7 @@ from ..process import GroupedProcess, Process, moveSalaryToFirstOfDay, sortByDat
 from ..base import *
 from ..userConfig import forceReadUserConfig
 from .importer import makeProcess as makeImporterProcess
-from .capitalGain import process as capitalGainProcess
+from .capitalGain import addCaptialGainProcess
 from .forecast import makeProcess as makeForecastProcess
 from typing import List, Optional
 
@@ -10,16 +10,24 @@ def _optionalProcess(proc: Optional["Process"]) -> List["Process"]:
     return [proc] if proc is not None else []
 
 def allCombined(includeTaxProcesses: bool) -> GroupedProcess:
-    config = forceReadUserConfig().processes
+    config = forceReadUserConfig()
     return GroupedProcess(label="All processes", processes=[
         makeImporterProcess(),
-        *_optionalProcess(config.simpleProcess if config else None),
-        *_optionalProcess(config.complexProcess if config else None),
-        capitalGainProcess,
+        *_optionalProcess(
+            mapOptional(config.processes, lambda c: c.simpleProcess),
+        ),
+        *_optionalProcess(
+            mapOptional(config.processes, lambda c: c.complexProcess),
+        ),
+        *_optionalProcess(
+            mapOptional(config.stock, lambda c: addCaptialGainProcess(c.stockUnit)),
+        ),
         makeForecastProcess(),
-    ] + (
-        _optionalProcess(config.taxProcess if config else None) if includeTaxProcesses else []
-    ) + [
+        *_optionalProcess(
+            mapOptional(
+                config.processes,
+                lambda c: c.taxProcess if includeTaxProcesses else None),
+        ),
         sortByDateAndMore,
         moveSalaryToFirstOfDay
     ])

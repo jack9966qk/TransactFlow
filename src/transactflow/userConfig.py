@@ -1,7 +1,7 @@
 from dataclasses import dataclass, field
 from typing import Callable, Dict, List, Optional, Tuple
 
-from .base import Date, Transaction
+from .base import Date, StockUnit, Transaction
 from .processes.payslipAnnotationItem import PayslipAnnotationItem
 
 
@@ -50,6 +50,7 @@ class ManualRecordPaths:
 
 @dataclass(frozen=True)
 class MorganStanleyImportConfig:
+    stockUnit: StockUnit
     equityStatementPath: str
     equityUnvestedPath: str
     withdrawPath: str
@@ -93,9 +94,10 @@ class ImporterConfig:
 # Stock / Morgan Stanley config (parsing callbacks)
 # ---------------------------------------------------------------------------
 
+# TODO: Remove the global stock unit.
 @dataclass(frozen=True)
 class StockConfig:
-    stockUnitTick: str
+    stockUnit: StockUnit
 
 
 # ---------------------------------------------------------------------------

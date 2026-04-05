@@ -4,7 +4,7 @@ from typing import Optional, cast
 import pickle
 import os
 import yfinance
-from .base import Date, Currency, JPY, USD, CNY, STOCK_UNIT
+from .base import Date, Currency, JPY, USD, CNY, StockUnit
 from .base import memo  # type: ignore
 from .userConfig import forceReadUserConfig
 
@@ -12,6 +12,7 @@ from .userConfig import forceReadUserConfig
 class RetrivedRates:
     JPYCNYRate: float
     USDJPYRate: float
+    stockUnit: StockUnit
     USDPerStockUnitShare: float
     dateOfRetrieval: Date
 
@@ -21,10 +22,14 @@ class RetrivedRates:
             return self.JPYCNYRate
         if convertFrom == USD and to == JPY:
             return self.USDJPYRate
-        if convertFrom == STOCK_UNIT and to == USD:
-            return self.USDPerStockUnitShare
-        if convertFrom == STOCK_UNIT and to == JPY:
-            return self.USDPerStockUnitShare * self.USDJPYRate
+        if isinstance(convertFrom, StockUnit):
+            if convertFrom != self.stockUnit:
+                # Rates resolution for more than one global stock unit is not yet supported.
+                assert(False)
+            if to == USD:
+                return self.USDPerStockUnitShare
+            if to == JPY:
+                return self.USDPerStockUnitShare * self.USDJPYRate
         # Unsupported rates. TODO: add support.
         assert(False)
 
@@ -40,8 +45,10 @@ def currencyRate(fromCur: Currency, toCur: Currency) -> float:
     import requests
     api_key = os.getenv("EXCHANGERATE_API_KEY")
     assert(api_key is not None and type(api_key) == str)
-    response = requests.request("GET",
-                                f"https://v6.exchangerate-api.com/v6/{api_key}/pair/{fromCur}/{toCur}")
+    response = requests.request(
+        "GET",
+        f"https://v6.exchangerate-api.com/v6/{api_key}/pair/{fromCur.label}/{toCur.label}",
+    )
     responseJson = response.json()
     lastUpdateTime = datetime.utcfromtimestamp(responseJson["time_last_update_unix"])
     tdelta = datetime.now() - lastUpdateTime
@@ -52,6 +59,9 @@ RATES_CACHE_PATH = "ratesCache.pickle"
 # Also cache in memory, so that the file is only read once
 @memo
 def getOrRetrieveLatestRates() -> RetrivedRates:
+    stockConfig = forceReadUserConfig().stock
+    assert(stockConfig is not None)
+    stockUnit = stockConfig.stockUnit
     rates: Optional[RetrivedRates] = None
     if os.path.exists(RATES_CACHE_PATH):
         with open(RATES_CACHE_PATH, "rb") as f:
@@ -59,14 +69,19 @@ def getOrRetrieveLatestRates() -> RetrivedRates:
     now = datetime.now()
     today = Date(year=now.year, month=now.month, day=now.day)
     targetDay = today if now.hour > 4 else today - timedelta(days=1)
-    if rates is not None and rates.dateOfRetrieval == targetDay:
+    if (
+        rates is not None and
+        # Rates resolution for more than one global stock unit is not yet supported.
+        rates.stockUnit == stockUnit and 
+        rates.dateOfRetrieval == targetDay
+    ):
         return rates
-    stockConfig = forceReadUserConfig().stock
-    assert(stockConfig is not None)
-    stockPrice = yfinance.Ticker(stockConfig.stockUnitTick).history(period="1d")["Close"].iloc[-1]
+    ticker = stockUnit.label
+    stockPrice = yfinance.Ticker(ticker).history(period="1d")["Close"].iloc[-1]
     rates = RetrivedRates(
         JPYCNYRate=currencyRate(JPY, CNY),
         USDJPYRate=currencyRate(USD, JPY),
+        stockUnit=stockUnit,
         USDPerStockUnitShare=cast(float, stockPrice),
         dateOfRetrieval=targetDay)
     with open(RATES_CACHE_PATH, "wb") as f:
