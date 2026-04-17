@@ -25,6 +25,7 @@ dependencies = [
     "xlrd>=2.0.2",
     "yfinance>=1.2.0",
     "protobuf>=5.29.0",
+    "nodriver>=0.48.1",
 ]
 
 [tool.setuptools.packages.find]

@@ -49,6 +49,7 @@ class AmexJpRetrievalConfig:
     timestampPath: Path
     currentYear: int
     userId: str
+    userDataDir: Path
 
     def __post_init__(self) -> None:
         assertAbsolute(self)

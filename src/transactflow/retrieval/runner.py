@@ -1,9 +1,6 @@
 from datetime import datetime
 from pathlib import Path
 
-# from importers.equity import EquityItem
-import patchright.sync_api
-from patchright.sync_api import sync_playwright
 from selenium import webdriver
 from selenium.webdriver.support.select import Select
 from selenium.common.exceptions import ElementNotInteractableException, NoSuchElementException
@@ -17,12 +14,14 @@ from selenium.webdriver.support.wait import WebDriverWait
 from selenium.webdriver.support.expected_conditions import element_to_be_clickable, presence_of_element_located
 from selenium.common.exceptions import TimeoutException
 from webdriver_manager.firefox import GeckoDriverManager
-from typing import TypeVar, Callable, Union
-import os
+from typing import TYPE_CHECKING, Awaitable, TypeVar, Callable, Union
+import asyncio
+import random
 import subprocess
 import time
 import pickle
 import csv
+import nodriver as uc
 
 from . import prestia, amexJp, suica, smbcCard
 from .config import (
@@ -47,7 +46,7 @@ def readCredential(dir: Path, fileName: str):
     return completedProcess.stdout.decode("utf-8")
 
 def findElementDeuggable(
-    browser: Union[RemoteWebDriver, WebElement], by=By.ID, value=None,
+    browser: Union[RemoteWebDriver, WebElement], by: str, value: str,
     timeout: float = 5.0,
 ) -> WebElement:
     valueToTry = value
@@ -171,15 +170,25 @@ class SeleniumHandle:
     def __exit__(self, type, value, traceback):
         if self.browser: self.browser.quit()
 
-def usePlaywright(usePage: Callable[[patchright.sync_api.Page], None]):
-    with sync_playwright() as p:
-        browser = p.chromium.launch(headless=False)
-        page = browser.new_page()
+def useNoDriver(
+    userDataDir: Path,
+    downloadDir: Path,
+    useBrowser: Callable[["uc.Browser"], Awaitable[None]],
+):
+    userDataDir.mkdir(parents=True, exist_ok=True)
+
+    async def inner():
+        browser = await uc.start(
+            user_data_dir=str(userDataDir),
+            headless=False,
+            lang="ja-JP",
+        )
         try:
-            usePage(page)
-        except patchright.sync_api.TimeoutError as e:
-            print(e)
-            breakpoint()
+            await browser.main_tab.set_download_path(downloadDir)
+            await useBrowser(browser)
+        finally:
+            browser.stop()
+    asyncio.run(inner())
 
 def busyWaitForAnyFile(paths: list[Path], verbose=True) -> Path:
     if verbose: print(f"Waiting for file(s) to exist: {paths}")
@@ -436,8 +445,11 @@ def downloadMobileSuicaAsTSV(
         writer.writerows(parsedTable)
     if merge: suica.updateFilesWithNewOriginalFile(newSectionPath, suicaConfig)
 
-def downloadAMEXJP2026XLS(
-    page: patchright.sync_api.Page,
+async def randomSleep(minSeconds: float, maxSeconds: float):
+    await asyncio.sleep(random.uniform(minSeconds, maxSeconds))
+
+async def downloadAMEXJP2026XLS(
+    browser: "uc.Browser",
     downloadDir: Path,
     credentialsDir: Path,
     amexJpConfig: AmexJpRetrievalConfig,
@@ -449,51 +461,65 @@ def downloadAMEXJP2026XLS(
         # the data directory, and update the code to read and save 2027 data.
         assert(False)
 
-    # Sign in page
-    page.goto("https://www.americanexpress.com/ja-jp/account/login")
-    page.fill("xpath=//input[@id='eliloUserID']", userId)
-    page.fill("xpath=//input[@id='eliloPassword']", readCredential(credentialsDir, "amex-jp"))
-    page.click("xpath=//button[@id='loginSubmit']")
+    # Sign in page. nodriver's `send_keys` dispatches real CDP key events one at a time,
+    # which avoids the one-shot DOM value assignment that bot detectors flag.
+    tab = await browser.get("https://www.americanexpress.com/ja-jp/account/login")
+    await randomSleep(1.5, 3.0)
 
-    verificationHeadingLocator = 'xpath=//h2[normalize-space()="カード情報の認証:認証コード"]'
-    usageButtonLocator = 'xpath=//button[@title="ご利用状況"]'
-    historyLinkLocator = 'xpath=//a[@title="ご利用履歴"]'
+    userField = await tab.select("#eliloUserID")
+    await userField.send_keys(userId)
+    await randomSleep(0.4, 1.0)
 
-    # Verification page
-    try:
-        page.wait_for_selector(verificationHeadingLocator, timeout=30000)
-        if page.is_visible(verificationHeadingLocator):
-            input("Please finish verification and proceed, press enter when the dashboard page loads...")
-    except patchright.sync_api.TimeoutError:
-        pass
+    passField = await tab.select("#eliloPassword")
+    await passField.send_keys(readCredential(credentialsDir, "amex-jp"))
+    await randomSleep(0.6, 1.4)
+
+    submitButton = await tab.select("#loginSubmit")
+    await submitButton.click()
+
+    verificationHeading = await tab.xpath(
+        '//h2[normalize-space()="カード情報の認証:認証コード"]', timeout=10)
+    if verificationHeading:
+        input("Please finish verification and proceed, press enter when the dashboard page loads...")
 
     # Dashboard page
-    page.click(usageButtonLocator)
-    page.click(historyLinkLocator)
+    await randomSleep(1.0, 2.0)
+    popupCloseButtons = await tab.xpath(
+        '//div[contains(@aria-label, "ポップアップ")]//button[@aria-label="閉じる"]')
+    if popupCloseButtons and popupCloseButtons[0] is not None:
+        await popupCloseButtons[0].click()
+        await randomSleep(0.4, 0.9)
+
+    usageButton = await tab.select('button[title="ご利用状況"]')
+    await usageButton.click()
+    await randomSleep(0.8, 1.6)
+    historyLink = await tab.select('a[title="ご利用履歴"]')
+    await historyLink.click()
 
     # History page
-    viewByYearsButtonLocator = 'xpath=//div[@data-module-name="axp-activity-navigation/Navigation"]//button[@title="年ごとに見る"]'
-    page.wait_for_selector(viewByYearsButtonLocator, timeout=10000)
-    time.sleep(5)
-    page.click(viewByYearsButtonLocator)
-    time.sleep(1)
-    thisYearOptionLocator = f'xpath=//div[@data-module-name="axp-activity-navigation/Navigation"]//a[@title="{year2026}"]'
-    page.click(thisYearOptionLocator)
+    await randomSleep(3.0, 5.0)
+    viewByYearsButton = await tab.select(
+        '[data-module-name="axp-activity-navigation/Navigation"] button[title="年ごとに見る"]')
+    await viewByYearsButton.click()
+    await randomSleep(0.8, 1.5)
+    thisYearOption = await tab.select(
+        f'[data-module-name="axp-activity-navigation/Navigation"] a[title="{year2026}"]')
+    await thisYearOption.click()
 
-    downloadIconLocator = 'xpath=//*[@id="action-icon-dls-icon-download-"]'
-    page.wait_for_selector(downloadIconLocator, timeout=10000)
-    page.click(downloadIconLocator)
+    await randomSleep(0.6, 1.2)
+    downloadIcon = await tab.select("#action-icon-dls-icon-download-")
+    await downloadIcon.click()
 
-    excelOptionLocator = 'xpath=//label[@for="axp-activity-download-body-selection-options-type_excel"]'
-    page.click(excelOptionLocator)
+    await randomSleep(0.4, 0.9)
+    excelOption = await tab.select(
+        'label[for="axp-activity-download-body-selection-options-type_excel"]')
+    await excelOption.click()
 
-    with page.expect_download() as downloadInfo:
-        downloadButtonLocator = 'xpath=//button[@title="ダウンロード"]'
-        page.click(downloadButtonLocator)
-    download = downloadInfo.value
+    await randomSleep(0.4, 0.9)
+    downloadButton = await tab.select('button[title="ダウンロード"]')
+    await downloadButton.click()
+
     downloadedFilePath = downloadDir / AMEX_DOWNLOAD_FILE_NAME
-    download.save_as(str(downloadedFilePath))
-
     busyWaitForAnyFile([downloadedFilePath])
     amexJp.updateFilesWithDownloadedXLSX(downloadedFilePath, f"{year2026}", amexJpConfig)
 
@@ -519,8 +545,12 @@ def run(config: RetrievalConfig):
         child.unlink()
 
     if (amexJpConfig := config.amexJp) is not None:
-        usePlaywright(lambda page: downloadAMEXJP2026XLS(
-            page, downloadDir, credentialsDir, amexJpConfig))
+        useNoDriver(
+            amexJpConfig.userDataDir,
+            downloadDir,
+            lambda browser: downloadAMEXJP2026XLS(
+                browser, downloadDir, credentialsDir, amexJpConfig),
+        )
 
     with SeleniumHandle(
         makeBrowserFactory(config),
