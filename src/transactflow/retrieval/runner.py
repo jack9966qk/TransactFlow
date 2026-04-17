@@ -1,11 +1,12 @@
 from datetime import datetime
+from pathlib import Path
 
 # from importers.equity import EquityItem
 import patchright.sync_api
 from patchright.sync_api import sync_playwright
 from selenium import webdriver
 from selenium.webdriver.support.select import Select
-from selenium.common.exceptions import NoSuchElementException
+from selenium.common.exceptions import ElementNotInteractableException, NoSuchElementException
 from selenium.webdriver.remote.webdriver import WebDriver as RemoteWebDriver
 from selenium.webdriver.remote.webelement import WebElement
 from selenium.webdriver.common.by import By
@@ -13,7 +14,7 @@ from selenium.webdriver.chrome.service import Service as ChromeService
 from selenium.webdriver.firefox.options import Options as FirefoxOptions
 from selenium.webdriver.firefox.service import Service as FirefoxService
 from selenium.webdriver.support.wait import WebDriverWait
-from selenium.webdriver.support.expected_conditions import element_to_be_clickable
+from selenium.webdriver.support.expected_conditions import element_to_be_clickable, presence_of_element_located
 from selenium.common.exceptions import TimeoutException
 from webdriver_manager.firefox import GeckoDriverManager
 from typing import TypeVar, Callable, Union
@@ -24,29 +25,74 @@ import pickle
 import csv
 
 from . import prestia, amexJp, suica, smbcCard
+from .config import (
+    AmexJpRetrievalConfig,
+    Browser,
+    PrestiaRetrievalConfig,
+    RetrievalConfig,
+    SmbcCardRetrievalConfig,
+    SuicaRetrievalConfig,
+)
 
 AMEX_DOWNLOAD_FILE_NAME = "Activity.xlsx"
 PRESTIA_COOKIE_KEY = "Prestia"
 SMBC_CREDIT_COOKIE_KEY = "SMBC-Credit"
 AMEX_JP_COOKIE_KEY = "AMEX-JP"
 SUICA_COOKIE_KEY = "Suica"
-COOKIES_PATH = "cookies.pkl"
 
 # TODO: Replace with a more secure storage e.g. OS keychain.
-def readCredential(dir: str, fileName: str):
-    path = os.path.join(dir, fileName)
-    completedProcess = subprocess.run(["cat", path], capture_output=True)
+def readCredential(dir: Path, fileName: str):
+    path = dir / fileName
+    completedProcess = subprocess.run(["cat", str(path)], capture_output=True)
     return completedProcess.stdout.decode("utf-8")
 
-def findElementDeuggable(browser: Union[RemoteWebDriver, WebElement], by=By.ID, value=None) -> WebElement:
+def findElementDeuggable(
+    browser: Union[RemoteWebDriver, WebElement], by=By.ID, value=None,
+    timeout: float = 5.0,
+) -> WebElement:
     valueToTry = value
     while True:
         try:
-            element = browser.find_element(by, valueToTry)
-            return element
-        except NoSuchElementException:
+            return WebDriverWait(browser, timeout=timeout).until(
+                presence_of_element_located((by, valueToTry)))
+        except TimeoutException:
+            print(f"Element not found within {timeout}s for {by}={valueToTry!r}.")
             breakpoint()
             valueToTry = input("Try a different locator value: ")
+
+def getAbsoluteXpath(element: WebElement) -> str:
+    """Return a fully-indexed absolute XPath of `element` (e.g. `/html[1]/body[1]/div[2]/a[1]`)."""
+    script = """
+    const el = arguments[0];
+    if (!el || el.nodeType !== 1) return '';
+    const parts = [];
+    for (let cur = el; cur && cur.nodeType === 1; cur = cur.parentNode) {
+        let i = 1;
+        for (let sib = cur.previousSibling; sib; sib = sib.previousSibling) {
+            if (sib.nodeType === 1 && sib.nodeName === cur.nodeName) i++;
+        }
+        parts.unshift(cur.nodeName.toLowerCase() + '[' + i + ']');
+    }
+    return '/' + parts.join('/');
+    """
+    return element.parent.execute_script(script, element)
+
+def clickDeuggable(element: WebElement, timeout: float = 5.0):
+    print(f"Clicking: {getAbsoluteXpath(element)}")
+    try:
+        WebDriverWait(element.parent, timeout=timeout).until(
+            element_to_be_clickable(element))
+    except TimeoutException:
+        print(f"Element did not become clickable within {timeout}s. "
+              "Resolve the page state in the browser, then continue (c) to retry.")
+        breakpoint()
+    try:
+        element.click()
+    except ElementNotInteractableException:
+        print("Got ElementNotInteractableException on click. "
+              "Resolve the page state in the browser, then continue (c) to retry.")
+        breakpoint()
+        element.click()
 
 def find_element_by_any_xpath(browser: RemoteWebDriver, paths):
     lastException = NoSuchElementException()
@@ -87,12 +133,13 @@ def findElementOrNone(browser: Union[RemoteWebDriver, WebElement], by=By.ID, val
         return None
 
 class CookieManager:
-    def __init__(self, browser: RemoteWebDriver):
+    def __init__(self, browser: RemoteWebDriver, cookiesPath: Path):
         self.browser = browser
+        self.cookiesPath = cookiesPath
         self.cookies = None
     def loadCookies(self):
-        if os.path.exists(COOKIES_PATH):
-            with open(COOKIES_PATH, "rb") as f:
+        if self.cookiesPath.exists():
+            with open(self.cookiesPath, "rb") as f:
                 self.cookies = pickle.load(f)
         else: self.cookies = {}
         for key, url in [
@@ -110,16 +157,17 @@ class CookieManager:
     def saveCookiesWithCurrentSession(self, sessionCookieKey: str):
         assert(self.cookies is not None)
         self.cookies[sessionCookieKey] = self.browser.get_cookies()
-        with open(COOKIES_PATH, "wb") as f:
+        with open(self.cookiesPath, "wb") as f:
             pickle.dump(self.cookies, f)
 
 class SeleniumHandle:
-    def __init__(self, makeBrowser):
+    def __init__(self, makeBrowser, cookiesPath: Path):
         self.makeBrowser = makeBrowser
+        self.cookiesPath = cookiesPath
         self.browser = None
     def __enter__(self):
         self.browser = self.makeBrowser()
-        return self.browser, CookieManager(self.browser)
+        return self.browser, CookieManager(self.browser, self.cookiesPath)
     def __exit__(self, type, value, traceback):
         if self.browser: self.browser.quit()
 
@@ -133,10 +181,10 @@ def usePlaywright(usePage: Callable[[patchright.sync_api.Page], None]):
             print(e)
             breakpoint()
 
-def busyWaitForAnyFile(paths, verbose=True):
+def busyWaitForAnyFile(paths: list[Path], verbose=True) -> Path:
     if verbose: print(f"Waiting for file(s) to exist: {paths}")
     try:
-        firstExisting = next(p for p in paths if os.path.exists(p))
+        firstExisting = next(p for p in paths if p.exists())
         return firstExisting
     except StopIteration:
         time.sleep(1.0)
@@ -149,60 +197,39 @@ def makeStockChromeBrowser(executable_path: str):
         )
     ) # type: ignore
 
-def makeUCChromeBrowser(downloadDirAbsolute: str):
+def makeUCChromeBrowser(downloadDir: Path):
     import undetected_chromedriver as uc
     options = uc.ChromeOptions()
     options.add_experimental_option("prefs", {
-        "download.default_directory": downloadDirAbsolute
+        "download.default_directory": str(downloadDir)
     })
     options.add_argument("--lang=ja")
     options.__dict__["headless"] = False # type: ignore
-    # options.add_argument(f"--download.default_directory={DOWNLOAD_DIR_FULL}")
     browser = uc.Chrome(options=options)
     return browser
 
-def makeFirefoxBrowser(downloadDirAbsolute: str):
-    # Disabled as browser.helperApps.neverAsk.SaveToDisk does not seem to work.
-    # Set profile to set file save location and skip the save dialog from Firefox.
-    # profile = webdriver.FirefoxProfile()
-    # downloadFileTypes = ["text/csv", "text/plain", "application/force-download"]
-    # # downloadFileTypes = ["*/*"]
-    # profile.set_preference("browser.helperApps.neverAsk.SaveToDisk", ", ".join(downloadFileTypes))
-    # profile.set_preference("browser.download.manager.showWhenStarting", False)
-    # USER_DEFINED_LOCATION = 2
-    # profile.set_preference("browser.download.folderList", USER_DEFINED_LOCATION)
-    # currentDir = os.getcwd()
-    # profile.set_preference("browser.download.dir", currentDir)
-
-    # Use existing profile:
-    # profile = webdriver.FirefoxProfile("/Users/[username]/Library/Application Support/Firefox/Profiles/[profile].Test")
-    # profile.set_preference('intl.accept_languages', 'ja')
-
+def makeFirefoxBrowser(downloadDir: Path):
     options = FirefoxOptions()
     options.set_preference("intl.accept_languages", "ja-jp,ja")
     options.set_preference("browser.download.folderList", 2)
-    options.set_preference("browser.download.dir", downloadDirAbsolute)
+    options.set_preference("browser.download.dir", str(downloadDir))
     options.set_preference("browser.helperApps.neverAsk.saveToDisk", "*/*, text/*");
 
     service = FirefoxService(executable_path=GeckoDriverManager().install())
     print(f"Service path: {service.path}")
 
     browser = webdriver.Firefox(service=service, options=options) # type: ignore
-    # browser = webdriver.Firefox(firefox_profile=profile)
-    # # Or not to specify it:
-    # browser = webdriver.Firefox()
     return browser
 
 def downloadPrestiaLast180Days(
     browser: RemoteWebDriver,
     cookieManager: CookieManager,
-    credentialsDirAbsolute: str,
-    downloadDirAbsolute: str,
-    expectDownloadedFilename: str,
+    credentialsDir: Path,
+    downloadDir: Path,
+    prestiaConfig: PrestiaRetrievalConfig,
     merge=False
 ):
-    userId = os.getenv("PRESTIA_USER_ID")
-    assert(userId is not None)
+    userId = prestiaConfig.userId
     browser.get("https://login.smbctb.co.jp/ib/portal/POSNIN1prestiatop.prst?LOCALE=ja_JP")
     transTabXpath = '//*[@id="header-nav-label-0"]'
     if findElementOrNone(browser, By.XPATH, transTabXpath) is None:
@@ -213,7 +240,7 @@ def downloadPrestiaLast180Days(
         idField = findElementDeuggable(browser, By.XPATH, '//*[@id="dispuserId"]')
         idField.send_keys(userId)
         pwField = findElementDeuggable(browser, By.XPATH, '//*[@id="disppassword"]')
-        pwField.send_keys(readCredential(credentialsDirAbsolute, "prestia"))
+        pwField.send_keys(readCredential(credentialsDir, "prestia"))
         submitButton = findElementDeuggable(browser, By.XPATH, "//div[@class='layout-table']/section//div[@class='btn-area']/a")
         assert("サインオン" in submitButton.text)
         submitButton.click()
@@ -224,35 +251,45 @@ def downloadPrestiaLast180Days(
     transTab = findElementDeuggable(browser, By.XPATH, transTabXpath)
     assert("取引明細" in transTab.text)
     transTab.click()
-    transDownloadPageLink = findElementDeuggable(browser, By.XPATH, "/html/body/form[1]/nav/div/ul/li[2]/ul/li[4]/a")
+
+    transDownloadPageLink = findElementDeuggable(browser, By.XPATH, "//*[@id='header-nav-menu-0']/li/a[contains(., '取引履歴ダウンロード')]")
     hrefText = transDownloadPageLink.get_attribute("href")
     assert(hrefText is not None and "accountinfotorihikidownload" in hrefText)
-    transDownloadPageLink.click()
+    clickDeuggable(transDownloadPageLink)
 
     # Transaction history download page.
     last180DaysRadioButton = findElementDeuggable(browser, By.XPATH, "/html/body/form[2]/main/div/section/div[2]/div[1]/table[1]/tbody/tr/td/fieldset[1]/label[3]/span")
     assert("直近180日間" in last180DaysRadioButton.text)
     last180DaysRadioButton.click()
-    firstRow = findElementDeuggable(browser, By.XPATH, "/html/body/form[2]/main/div/section/div[2]/section/table/tbody/tr[1]")
-    accountName = findElementDeuggable(firstRow, By.XPATH, "./td[1]")
-    assert("円普通預金" in accountName.text)
-    downloadButton = findElementDeuggable(firstRow, By.XPATH, "./td[5]")
+
+    rows = browser.find_elements(By.XPATH, "//main//section[@class='account']//table[1]/tbody/tr")
+    yenSavingsRow = None
+    for row in rows:
+        accountName = findElementDeuggable(row, By.XPATH, "./td[1]")
+        if "プレスティア マルチマネー口座円普通預金" in accountName.text:
+            continue
+        if "円普通預金" in accountName.text:
+            yenSavingsRow = row
+            break
+    assert(yenSavingsRow is not None)
+    downloadButton = findElementDeuggable(yenSavingsRow, By.XPATH, "./td[5]")
     assert("ダウンロードする" in downloadButton.text)
+    browser.execute_script("arguments[0].scrollIntoView({block: 'center'});", downloadButton)
+    time.sleep(3)
     downloadButton.click()
 
-    downloadedFilePath = os.path.join(downloadDirAbsolute, expectDownloadedFilename)
+    downloadedFilePath = downloadDir / prestiaConfig.expectDownloadedFilename
     busyWaitForAnyFile([downloadedFilePath])
-    if merge: prestia.updateFilesWithNewOriginalFile(downloadedFilePath)
+    if merge: prestia.updateFilesWithNewOriginalFile(downloadedFilePath, prestiaConfig)
 
 def downloadSMBCCreditCSV(
     browser: RemoteWebDriver,
     cookieManager: CookieManager,
-    downloadDirAbsolute: str,
-    credentialsDirAbsolute: str,
-    forLastNMonths=3
+    downloadDir: Path,
+    credentialsDir: Path,
+    smbcCardConfig: SmbcCardRetrievalConfig,
 ):
-    userId = os.getenv("SMBC_CARD_USER_ID")
-    assert(userId is not None)
+    userId = smbcCardConfig.userId
     # Sign in page.
     print("Loading smbc-card page, please clear cookie if the puzzle section never loads")
     browser.get("https://www.smbc-card.com/mem/index.jsp")
@@ -260,7 +297,7 @@ def downloadSMBCCreditCSV(
     idField = findElementDeuggable(browser, By.XPATH, "//form[@method='post']/div[@id='input_id']/input")
     idField.send_keys(userId)
     pwField = findElementDeuggable(browser, By.XPATH, "//form[@method='post']/div[@id='input_password']/input")
-    pwField.send_keys(readCredential(credentialsDirAbsolute, "smbc-card"))
+    pwField.send_keys(readCredential(credentialsDir, "smbc-card"))
     try:
         browser.find_elements(By.XPATH, "//div[@id='QqCmsEKCcaptcha']")
         input("Please finish the puzzle and click on log in button, press enter when the next page loads...")
@@ -294,7 +331,7 @@ def downloadSMBCCreditCSV(
     assert(monthSelectionElem is not None)
     monthSelection = Select(monthSelectionElem)
     options = monthSelection.options
-    values = [m.get_attribute("value") for m in options[1:1+forLastNMonths]]
+    values = [m.get_attribute("value") for m in options[1:1+smbcCardConfig.forLastNMonths]]
     values = [v for v in values if v is not None]
     for value in values:
         # For some reason trying to select with monthSelection may cause an error,
@@ -333,32 +370,30 @@ def downloadSMBCCreditCSV(
             except TimeoutException as e:
                 print(f"Timeout excpetion waiting for button to be clickable: {e}")
                 breakpoint()
-            # if not downloadButton.is_displayed():
-            #     raise NoSuchElementException()
             assert(("CSV形式で保存する" in downloadButton.text) or ("Save in CSV format" in downloadButton.text))
             downloadButton.click()
-            downloadFilePaths = [os.path.join(downloadDirAbsolute, f"{value}.csv")]
+            downloadFilePaths = [downloadDir / f"{value}.csv"]
             # Sometimes, even for incomplete month, the download file name is the same
             # as complete month, therefore need to check this as well.
             # Incomplete month has 7 digits in selection menu (e.g 2020031).
             isIncompleteMonth = len(value) == 7
             if isIncompleteMonth:
                 altFilename = value[:-1]
-                downloadFilePaths.append(os.path.join(downloadDirAbsolute, f"{altFilename}.csv"))
+                downloadFilePaths.append(downloadDir / f"{altFilename}.csv")
             downloadedPath = busyWaitForAnyFile(downloadFilePaths)
-            smbcCard.moveFileForMonthIntoDataDir(downloadedPath, value)
+            smbcCard.moveFileForMonthIntoDataDir(downloadedPath, value, smbcCardConfig)
         except NoSuchElementException:
             print(f"Skipping {value} because download button cannot be found (no transactions?)")
 
 def downloadMobileSuicaAsTSV(
     browser: RemoteWebDriver,
     cookieManager: CookieManager,
-    downloadDirAbsolute: str,
-    credentialsDirAbsolute: str,
+    downloadDir: Path,
+    credentialsDir: Path,
+    suicaConfig: SuicaRetrievalConfig,
     merge=False
 ):
-    email = os.getenv("MOBILE_SUICA_EMAIL")
-    assert(email is not None)
+    email = suicaConfig.email
 
     browser.get("https://www.mobilesuica.com/")
     historyXpath = '//div[@id="btn_sfHistory"]'
@@ -367,16 +402,10 @@ def downloadMobileSuicaAsTSV(
     if historyLink is None:
         # Sign in page.
         idField = findElementDeuggable(browser, By.XPATH, '//input[@name="MailAddress"]')
-        
+
         idField.send_keys(email)
         pwField = findElementDeuggable(browser, By.XPATH, '//input[@name="Password"]')
-        pwField.send_keys(readCredential(credentialsDirAbsolute, "suica"))
-        # Uncomment below to get the captcha image and present it to the user.
-        # captchaImage = browser.find_element(By.XPATH, '//img[@class="igc_TrendyCaptchaImage"]')
-        # imageData = captchaImage.screenshot_as_png
-        # with open("suica_captcha.png", "wb") as f:
-        #     f.write(imageData)
-        # subprocess.run("open suica_captcha.png".split())
+        pwField.send_keys(readCredential(credentialsDir, "suica"))
         captchaResult = input("Please enter CAPTCHA result: ")
         captchaField = findElementDeuggable(browser, By.XPATH, '//input[@id="WebCaptcha1__editor"]')
         altText = captchaField.get_attribute("alt")
@@ -401,19 +430,19 @@ def downloadMobileSuicaAsTSV(
         cols = row.find_elements(By.XPATH, "./td")
         return [c.text for c in cols]
     parsedTable = [parseRow(r) for r in rows]
-    newSectionPath = os.path.join(downloadDirAbsolute, "suica_new.tsv")
+    newSectionPath = downloadDir / "suica_new.tsv"
     with open(newSectionPath, "w") as f:
         writer = csv.writer(f, delimiter="\t")
         writer.writerows(parsedTable)
-    if merge: suica.updateFilesWithNewOriginalFile(newSectionPath)
+    if merge: suica.updateFilesWithNewOriginalFile(newSectionPath, suicaConfig)
 
 def downloadAMEXJP2026XLS(
     page: patchright.sync_api.Page,
-    downloadDirAbsolute: str,
-    credentialsDirAbsolute: str,
+    downloadDir: Path,
+    credentialsDir: Path,
+    amexJpConfig: AmexJpRetrievalConfig,
 ):
-    userId = os.getenv("AMEX_JP_USER_ID")
-    assert(userId is not None)
+    userId = amexJpConfig.userId
     year2026 = datetime.now().year
     if year2026 != 2026:
         # Need to support multi year, or do it manually by downloading the 2026 full record into
@@ -423,7 +452,7 @@ def downloadAMEXJP2026XLS(
     # Sign in page
     page.goto("https://www.americanexpress.com/ja-jp/account/login")
     page.fill("xpath=//input[@id='eliloUserID']", userId)
-    page.fill("xpath=//input[@id='eliloPassword']", readCredential(credentialsDirAbsolute, "amex-jp"))
+    page.fill("xpath=//input[@id='eliloPassword']", readCredential(credentialsDir, "amex-jp"))
     page.click("xpath=//button[@id='loginSubmit']")
 
     verificationHeadingLocator = 'xpath=//h2[normalize-space()="カード情報の認証:認証コード"]'
@@ -437,8 +466,6 @@ def downloadAMEXJP2026XLS(
             input("Please finish verification and proceed, press enter when the dashboard page loads...")
     except patchright.sync_api.TimeoutError:
         pass
-
-    # cookieManager.saveCookiesWithCurrentSession(AMEX_JP_COOKIE_KEY)
 
     # Dashboard page
     page.click(usageButtonLocator)
@@ -464,39 +491,57 @@ def downloadAMEXJP2026XLS(
         downloadButtonLocator = 'xpath=//button[@title="ダウンロード"]'
         page.click(downloadButtonLocator)
     download = downloadInfo.value
-    downloadedFilePath = os.path.join(downloadDirAbsolute, AMEX_DOWNLOAD_FILE_NAME)
+    downloadedFilePath = downloadDir / AMEX_DOWNLOAD_FILE_NAME
     download.save_as(str(downloadedFilePath))
 
     busyWaitForAnyFile([downloadedFilePath])
-    amexJp.updateFilesWithDownloadedXLSX(downloadedFilePath, f"{year2026}")
+    amexJp.updateFilesWithDownloadedXLSX(downloadedFilePath, f"{year2026}", amexJpConfig)
 
 
-def run(
-    downloadDirAbsolute: str,
-    credentialsDirAbsolute: str,
-    expectPrestiaDownloadedFilename: str,
-):
-    # updateEquityTSVWithProsperHTML()
+def makeBrowserFactory(config: RetrievalConfig) -> Callable[[], RemoteWebDriver]:
+    match config.browser:
+        case Browser.UC_CHROME:
+            return lambda: makeUCChromeBrowser(config.downloadDir)
+        case Browser.FIREFOX:
+            return lambda: makeFirefoxBrowser(config.downloadDir)
+        case Browser.STOCK_CHROME:
+            assert(config.chromeDriverPath is not None)
+            executablePath = str(config.chromeDriverPath)
+            return lambda: makeStockChromeBrowser(executablePath)
 
-    assert(os.path.exists(downloadDirAbsolute))
-    for fileName in os.listdir(downloadDirAbsolute):
-        os.remove(os.path.join(downloadDirAbsolute, fileName))
 
-    # usePlaywright(downloadAMEXJP2026XLS)
+def run(config: RetrievalConfig):
+    downloadDir = config.downloadDir
+    credentialsDir = config.credentialsDir
 
-    # with SeleniumHandle(makeSeleniumBaseBrowser) as (browser, cookieManager):
-    # with SeleniumHandle(makeFirefoxBrowser) as (browser, cookieManager):
-    with SeleniumHandle(makeUCChromeBrowser) as (browser, cookieManager):
-    # with SeleniumHandle(makeStockChromeBrowser) as (browser, cookieManager):
+    assert(downloadDir.exists())
+    for child in downloadDir.iterdir():
+        child.unlink()
+
+    if (amexJpConfig := config.amexJp) is not None:
+        usePlaywright(lambda page: downloadAMEXJP2026XLS(
+            page, downloadDir, credentialsDir, amexJpConfig))
+
+    with SeleniumHandle(
+        makeBrowserFactory(config),
+        config.cookiesPath,
+    ) as (browser, cookieManager):
         cookieManager.loadCookies()
-        # downloadMobileSuicaAsTSV(browser, cookieManager, merge=True)
-        # downloadSMBCCreditCSV(browser, cookieManager, forLastNMonths=10)
-        downloadPrestiaLast180Days(
-            browser,
-            cookieManager,
-            downloadDirAbsolute,
-            credentialsDirAbsolute,
-            expectPrestiaDownloadedFilename,
-            merge=True,
-        )
+        # if config.suica is not None:
+        #     downloadMobileSuicaAsTSV(
+        #         browser, cookieManager, downloadDir, credentialsDir,
+        #         config.suica, merge=True)
+        # if config.smbcCard is not None:
+        #     downloadSMBCCreditCSV(
+        #         browser, cookieManager, downloadDir, credentialsDir,
+        #         config.smbcCard)
+        if (prestiaConfig := config.prestia) is not None:
+            downloadPrestiaLast180Days(
+                browser,
+                cookieManager,
+                credentialsDir,
+                downloadDir,
+                prestiaConfig,
+                merge=True,
+            )
         input("Finished. Press enter to close browser.")

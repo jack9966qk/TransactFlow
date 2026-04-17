@@ -1,10 +1,9 @@
+from pathlib import Path
+
 from .common import LineWithContext, prependWithAlignment, shiftCombinedForNewMerge, writeLocalTimeString
-import os
+from .config import PrestiaRetrievalConfig
 
-PRESTIA_DATA_DIR = "./data/rawTransactions/prestia"
-PRESTIA_DATA_TIMESTAMP_PATH = "./data/rawTransactions/prestia/last_update_time"
-
-def mergePrestiaFiles(combined, newSection, outputPath):
+def mergePrestiaFiles(combined: Path, newSection: Path, outputPath: Path):
     def canUseAsAlignment(lineWithContext: LineWithContext):
         if lineWithContext.lineAfter is None: return False
         dateChange = (lineWithContext.line[:12] !=
@@ -13,13 +12,13 @@ def mergePrestiaFiles(combined, newSection, outputPath):
     prependWithAlignment(newSection, combined, canUseAsAlignment,
                          outFilePath=outputPath)
 
-def updateFilesWithNewOriginalFile(filePath: str):
+def updateFilesWithNewOriginalFile(filePath: Path, config: PrestiaRetrievalConfig):
     # Move file to data directory
-    combined = os.path.join(PRESTIA_DATA_DIR, "combined.csv")
-    combinedPrev = shiftCombinedForNewMerge(PRESTIA_DATA_DIR, "csv")
+    combined = config.dataDir / "combined.csv"
+    combinedPrev = shiftCombinedForNewMerge(config.dataDir, "csv")
     if combinedPrev:
         # Merge to combined file
         mergePrestiaFiles(combinedPrev, filePath, combined)
     else:
-        os.rename(filePath, combined)
-    writeLocalTimeString(PRESTIA_DATA_TIMESTAMP_PATH)
+        filePath.rename(combined)
+    writeLocalTimeString(config.timestampPath)

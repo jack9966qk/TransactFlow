@@ -1,10 +1,9 @@
+from pathlib import Path
+
 from .common import prependWithAlignment, shiftCombinedForNewMerge, writeLocalTimeString
-import os
+from .config import SuicaRetrievalConfig
 
-SUICA_DATA_DIR = "./data/rawTransactions/suica"
-SUICA_DATA_TIMESTAMP_PATH = "./data/rawTransactions/suica/last_update_time"
-
-def mergeSuicaFiles(combined, newSection, outputPath):
+def mergeSuicaFiles(combined: Path, newSection: Path, outputPath: Path):
     def canUseAsAlignment(lineWithContext):
         if lineWithContext.lineAfter is None: return False
         dateChange = (lineWithContext.line[:5] !=
@@ -14,13 +13,13 @@ def mergeSuicaFiles(combined, newSection, outputPath):
                          outFilePath=outputPath, encoding="utf-8")
 
 
-def updateFilesWithNewOriginalFile(filePath: str):
+def updateFilesWithNewOriginalFile(filePath: Path, config: SuicaRetrievalConfig):
     # Move file to data directory
-    combined = os.path.join(SUICA_DATA_DIR, "combined.tsv")
-    combinedPrev = shiftCombinedForNewMerge(SUICA_DATA_DIR, "tsv")
+    combined = config.dataDir / "combined.tsv"
+    combinedPrev = shiftCombinedForNewMerge(config.dataDir, "tsv")
     if combinedPrev:
         # Merge to combined file
         mergeSuicaFiles(combinedPrev, filePath, combined)
     else:
-        os.rename(filePath, combined)
-    writeLocalTimeString(SUICA_DATA_TIMESTAMP_PATH)
+        filePath.rename(combined)
+    writeLocalTimeString(config.timestampPath)

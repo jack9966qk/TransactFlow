@@ -1,14 +1,11 @@
-import os
+from pathlib import Path
 
 from .common import writeLocalTimeString
+from .config import SmbcCardRetrievalConfig
 
-SMBC_CREDIT_DATA_DIR = "./data/rawTransactions/smbc-card"
-SMBC_CREDIT_DATA_MONTHS_DIR = "./data/rawTransactions/smbc-card/months"
-SMBC_CREDIT_DATA_TIMESTAMP_PATH = "./data/rawTransactions/smbc-card/last_update_time"
-
-def moveFileForMonthIntoDataDir(filePath: str, name: str):
-    moveToPath = os.path.join(SMBC_CREDIT_DATA_MONTHS_DIR, f"{name}.csv")
-    if os.path.exists(moveToPath):
-        os.remove(moveToPath)
-    os.rename(filePath, moveToPath)
-    writeLocalTimeString(SMBC_CREDIT_DATA_TIMESTAMP_PATH)
+def moveFileForMonthIntoDataDir(filePath: Path, name: str, config: SmbcCardRetrievalConfig):
+    moveToPath = config.monthsDir / f"{name}.csv"
+    if moveToPath.exists():
+        moveToPath.unlink()
+    filePath.rename(moveToPath)
+    writeLocalTimeString(config.timestampPath)

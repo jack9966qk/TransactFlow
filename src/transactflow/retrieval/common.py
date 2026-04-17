@@ -1,33 +1,34 @@
 import os
 from collections import namedtuple
 from datetime import datetime
+from pathlib import Path
 from typing import Any, Callable, Optional, TextIO
 from tzlocal import get_localzone
 
-def writeLocalTimeString(filePath: str, time: Optional[datetime] = None):
+def writeLocalTimeString(filePath: Path, time: Optional[datetime] = None):
     with open(filePath, "w") as f:
         if time is None: time = datetime.now(get_localzone())
         f.write(time.isoformat())
 
-def shiftCombinedForNewMerge(baseDir, ext):
+def shiftCombinedForNewMerge(baseDir: Path, ext: str) -> Optional[Path]:
     """
     Shift existing "combined.{ext}" files by one to make space
     for new combined file. Assume the 1st, 2nd and 3nd latest
     files named "combined.{ext}", "combined_prev.{ext}" and
     "combined_prev_prev.{ext}".
-    
+
     Return path to "combined_prev.csv" which is the lastest
     before this retrieval, or None if nothing exists.
     """
-    combinedPrevPrev = os.path.join(baseDir, f"combined_prev_prev.{ext}")
-    if os.path.exists(combinedPrevPrev):
-        os.remove(combinedPrevPrev)
-    combinedPrev = os.path.join(baseDir, f"combined_prev.{ext}")
-    if os.path.exists(combinedPrev):
-        os.rename(combinedPrev, combinedPrevPrev)
-    combined = os.path.join(baseDir, f"combined.{ext}")
-    if os.path.exists(combined):
-        os.rename(combined, combinedPrev)
+    combinedPrevPrev = baseDir / f"combined_prev_prev.{ext}"
+    if combinedPrevPrev.exists():
+        combinedPrevPrev.unlink()
+    combinedPrev = baseDir / f"combined_prev.{ext}"
+    if combinedPrev.exists():
+        combinedPrev.rename(combinedPrevPrev)
+    combined = baseDir / f"combined.{ext}"
+    if combined.exists():
+        combined.rename(combinedPrev)
         return combinedPrev
     return None
 
@@ -64,10 +65,10 @@ class CannotFindAlignmentError(BaseException): pass
 class InconsistentLinesError(BaseException): pass
 
 def prependWithAlignment(
-        fromFilePath: str,
-        toFilePath: str,
+        fromFilePath: Path,
+        toFilePath: Path,
         canUseAsAlignment: Callable[[LineWithContext], bool],
-        outFilePath: Optional[str] = None,
+        outFilePath: Optional[Path] = None,
         encoding: str = "shift_jis"
 ):
     """
