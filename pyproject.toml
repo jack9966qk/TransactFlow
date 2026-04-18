@@ -38,4 +38,7 @@ python_files = "test_*.py"
 dev = [
     "pytest>=9.0.2",
     "grpcio-tools>=1.70.0",
+    "jupyterlab>=4.3.0",
+    "ipykernel>=6.29.0",
+    "notebook>=7.0",
 ]

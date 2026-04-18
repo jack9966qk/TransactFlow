@@ -1,13 +1,14 @@
 from .base import *
 from .analysis import OTHER, REMAINING, SALARY_AFTER_DEDUCTION, BONUS_AFTER_DEDUCTION, EQUITY_AFTER_DEDUCTION
 
-COLORS: Dict[Category, str] = {
+COLORS: dict[Category, str] = {
     # Income
     INCOME: "xkcd:sea blue",
     EARNED_INCOME: "xkcd:sea blue",
     SALARY: "xkcd:sea blue",
     SALARY_AFTER_DEDUCTION: "xkcd:sea blue",
     NON_TAXABLE_SALARY: "xkcd:sea blue",
+    NON_TAXABLE_SALARY_HOUSING_BENEFIT: "xkcd:sea blue",
     CASH_BACK: "xkcd:sea blue",
     BONUS: "xkcd:gold",
     BONUS_AFTER_DEDUCTION: "xkcd:gold",
