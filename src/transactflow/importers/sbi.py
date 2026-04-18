@@ -1,8 +1,8 @@
 from itertools import count
 from ..base import EXPENSE, INCOME, JPY, SBI_NET_BANK, MoneyAmount, Transaction, SMBC_PRESTIA
-from .importer import CsvImporter, addingCutoffTransactionTo, readDateOfTimestampFile
+from .importer import DictCsvImporter, addingCutoffTransactionTo, readDateOfTimestampFile
 from dateutil.parser import parse as parseDate
-from typing import List, Optional, Tuple, TextIO, cast
+from typing import Dict, List, Optional, Tuple, TextIO, cast
 
 def readSBINetBankCSV(filename: str, timestampPath: str) -> List[Transaction]:
     def readNumOfLines() -> int:
@@ -12,7 +12,7 @@ def readSBINetBankCSV(filename: str, timestampPath: str) -> List[Transaction]:
         return counter
     numLines = readNumOfLines()
 
-    def parseSBITransactionLine(row: dict, raw: str, lineNum: int) -> Optional[Transaction]:
+    def parseSBITransactionLine(row: Dict[str, str], raw: str, lineNum: int) -> Optional[Transaction]:
         def amountQuantity():
             if (expenseAmountString := row["出金金額(円)"]):
                 return -float(expenseAmountString.replace(",", ""))
@@ -28,7 +28,7 @@ def readSBINetBankCSV(filename: str, timestampPath: str) -> List[Transaction]:
             sourceLocation=(filename, lineNum - numLines - 1))
 
     with open(filename, "r", encoding="shift_jis") as f:
-        importer = CsvImporter(parseSBITransactionLine, dictReader=True)
+        importer = DictCsvImporter(parseSBITransactionLine)
         transactions = importer.parseFile(cast(TextIO, f))
     return addingCutoffTransactionTo(
         transactions,

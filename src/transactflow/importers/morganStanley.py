@@ -1,6 +1,6 @@
 from typing import Dict, List, TextIO, cast, Optional
 from ..base import *
-from ..importers.importer import CsvImporter
+from ..importers.importer import DictCsvImporter
 from dateutil.parser import parse as parseDate
 from dataclasses import dataclass
 from ..userConfig import MorganStanleyImportConfig
@@ -68,7 +68,7 @@ def parseVested(
     statementFilePath = config.equityStatementPath
     def skipStatementLine(raw: str) -> bool:
         return config.vestedParsingShouldIgnore({}, raw, 0)
-    def parseVestedLine(row: dict, raw: str, lineNum: int) -> Optional[Transaction]:
+    def parseVestedLine(row: Dict[str, str], raw: str, lineNum: int) -> Optional[Transaction]:
         if config.vestedParsingShouldIgnore(row, raw, lineNum):
             return None
         item = VestedEquityItem.fromCsvRow(row, config.usdJpyRateAtDate, config)
@@ -88,7 +88,7 @@ def parseVested(
             )
         )
     with open(statementFilePath, "r") as f:
-        importer = CsvImporter(parseVestedLine, dictReader=True, dropWhile=skipStatementLine)
+        importer = DictCsvImporter(parseVestedLine, dropWhile=skipStatementLine)
         return importer.parseFile(cast(TextIO, f))
 
 def parseUnvested(
@@ -97,7 +97,7 @@ def parseUnvested(
     unvestedFilePath = config.equityUnvestedPath
     def skipUnvestedLine(raw: str) -> bool:
         return config.unvestedParsingShouldIgnore({}, raw, 0)
-    def parseUnvestedLine(row: dict, raw: str, lineNum: int) -> Optional[Transaction]:
+    def parseUnvestedLine(row: Dict[str, str], raw: str, lineNum: int) -> Optional[Transaction]:
         if raw.startswith('The numbers on this statement reflect'): return None
         item = UnvestedEquityItem.fromCsvRow(row)
         description = f"Unvested equity {item.numUnits} Stock Units"
@@ -113,7 +113,7 @@ def parseUnvested(
             adjustments=(item.numUnits,),
             isForecast=True)
     with open(unvestedFilePath, "r") as f:
-        importer = CsvImporter(parseUnvestedLine, dictReader=True, dropWhile=skipUnvestedLine)
+        importer = DictCsvImporter(parseUnvestedLine, dropWhile=skipUnvestedLine)
         return importer.parseFile(cast(TextIO, f))
 
 def parseWithdraw(
@@ -125,7 +125,7 @@ def parseWithdraw(
     # TODO: Replace this workaround with an updated CsvImporter that accepts multiple transactions
     # generated per line.
     gains: List[Transaction] = []
-    def parseWithdrawLine(row: dict, raw: str, lineNum: int) -> Optional[Transaction]:
+    def parseWithdrawLine(row: Dict[str, str], raw: str, lineNum: int) -> Optional[Transaction]:
         if config.withdrawParsingShouldIgnore(row, raw, lineNum):
             return None
         item = WithdrawItem.fromCsvRow(row)
@@ -161,7 +161,7 @@ def parseWithdraw(
             referencedExchangeRates=rates
         )
     with open(withdrawReportFilePath, "r") as f:
-        importer = CsvImporter(parseWithdrawLine, dictReader=True, dropWhile=skipWithdrawLine)
+        importer = DictCsvImporter(parseWithdrawLine, dropWhile=skipWithdrawLine)
         sales = importer.parseFile(cast(TextIO, f))
     return sales + gains
 
