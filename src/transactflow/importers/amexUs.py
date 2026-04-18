@@ -1,18 +1,18 @@
 from calendar import c
 import os
-from ..base import AMEX_JP, EXPENSE, INCOME, JPY, SOURCE_CUTOFF, MoneyAmount, Transaction, syntheticTransaction
+from ..base import AMEX_JP, AMEX_US, EXPENSE, INCOME, JPY, SOURCE_CUTOFF, USD, MoneyAmount, Transaction, syntheticTransaction
 from .importer import DictCsvImporter, addingCutoffTransactionTo, readDateOfTimestampFile
 from dateutil.parser import parse as parseDate
 from typing import Dict, List, Optional, TextIO, cast
 
 from ..retrieval.common import forEachFileToReadFrom
 
-def readAmexJpCsvFiles(convertedDir: str, timestampPath: str) -> List[List[Transaction]]:
+def readAmexUsCsvFiles(convertedDir: str, timestampPath: str) -> List[List[Transaction]]:
     transactionGroups: List[List[Transaction]] = []
     readFromDir = convertedDir
     def addTransactionsToGroup(fileName: str, incomplete: bool):
         readFromPath = os.path.join(readFromDir, fileName)
-        transactionGroups.append(readAmexJpCsv(readFromPath))
+        transactionGroups.append(readAmexUsCsv(readFromPath))
     def isCompleteSection(filename: str): return not "incomplete" in filename
     forEachFileToReadFrom(
         dir=readFromDir,
@@ -25,33 +25,27 @@ def readAmexJpCsvFiles(convertedDir: str, timestampPath: str) -> List[List[Trans
         addingCutoffTransactionTo(
             [],
             date=readDateOfTimestampFile(timestampPath),
-            account=AMEX_JP)
+            account=AMEX_US)
     )
     return transactionGroups
 
-def readAmexJpCsv(filename: str) -> List[Transaction]:
+def readAmexUsCsv(filename: str) -> List[Transaction]:
     with open(filename, "r", encoding="utf-8") as f:
         numLines = len(f.readlines())
     def parseLine(row: Dict[str, str], raw: str, lineNum: int) -> Optional[Transaction]:
-        amount = -float(row["金額"].replace(",", "").replace("￥", ""))
-        if "追加情報" in row:
-            comment = row["追加情報"]
-        else:
-            # For some files the header for additional info is missing.
-            comment = row[""]
-        if len(comment) == 0:
-            comment = None
+        amount = -float(row["Amount"].replace(",", ""))
         return Transaction(
-            date=parseDate(row["ご利用日"]).date(),
-            description=row["ご利用内容"].encode("utf-8").decode("utf-8"),
-            rawAmount=MoneyAmount(JPY, amount),
-            account=AMEX_JP,
+            date=parseDate(row["Date"]).date(),
+            description=row["Description"].encode("utf-8").decode("utf-8"),
+            rawAmount=MoneyAmount(USD, amount),
+            account=AMEX_US,
             category=EXPENSE if amount < 0 else INCOME,
             rawRecord=raw,
             sourceLocation=(filename, lineNum - numLines),
-            comment=comment)
+            comment=None)
     with open(filename, "r", encoding="utf-8") as f:
+        headerSubstring = "Date,Description,Amount,Extended Details,Appears On Your Statement As,Address,City/State,Zip Code,Country,Reference,Category"
         importer = DictCsvImporter(
             parseLine,
-            dropWhile=lambda s: "ご利用日,データ処理日,ご利用内容,金額,海外通貨利用金額,換算レート" not in s)
+            dropWhile=lambda s: headerSubstring not in s)
         return importer.parseFile(cast(TextIO, f))

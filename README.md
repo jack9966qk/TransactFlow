@@ -39,7 +39,7 @@ config = UserConfig(
             csvPath="/path/to/revolut/all.csv",
             timestampPath="/path/to/revolut/last_update_time",
         ),
-        amexJp=AmexJpPaths(
+        amexJp=AmexPaths(
             convertedDir="/path/to/amex-jp/converted_years/",
             timestampPath="/path/to/amex-jp/last_update_time",
         ),

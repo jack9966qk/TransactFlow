@@ -24,7 +24,7 @@ import pickle
 import csv
 import nodriver as uc
 
-from . import prestia, amexJp, suica, smbcCard
+from . import amex, prestia, suica, smbcCard
 from .config import (
     AmexRetrievalConfig,
     Browser,
@@ -587,7 +587,7 @@ async def downloadAMEX2026XLS(
 
     downloadedFilePath = downloadDir / AMEX_DOWNLOAD_FILE_NAME
     busyWaitForAnyFile([downloadedFilePath])
-    amexJp.updateFilesWithDownloadedXLSX(downloadedFilePath, f"{year2026}", amexConfig)
+    amex.updateFilesWithDownloadedXLSX(downloadedFilePath, f"{year2026}", amexConfig)
 
 
 def makeBrowserFactory(config: RetrievalConfig) -> Callable[[], RemoteWebDriver]:

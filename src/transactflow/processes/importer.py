@@ -2,6 +2,7 @@ from typing import Callable, List, Optional
 
 from ..importers.amazonGiftCard import annotateAmazonGiftCardTransactions
 from ..importers.amexJp import readAmexJpCsvFiles
+from ..importers.amexUs import readAmexUsCsvFiles
 from ..importers.diners import readDinersCsvFiles
 from ..importers.jcb import readJcbCsvFiles
 from ..importers.manualRecord import readManualRecordCsv
@@ -86,6 +87,14 @@ def _buildImporterProcesses(config: ImporterConfig) -> List[Process]:
             label="Import AMEX JP",
             account=AMEX_JP,
             readFromSource=lambda a=amexJp: concat(readAmexJpCsvFiles(
+                a.convertedDir, a.timestampPath)),
+        ))
+
+    if (amexUs := config.amexUs) is not None:
+        processes.append(ImporterProcess(
+            label="Import AMEX US",
+            account=AMEX_US,
+            readFromSource=lambda a=amexUs: concat(readAmexUsCsvFiles(
                 a.convertedDir, a.timestampPath)),
         ))
 

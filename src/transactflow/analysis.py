@@ -6,7 +6,7 @@ from enum import Enum
 from transactflow.userConfig import UserConfig
 from .rates import RetrivedRates, getOrRetrieveLatestRates
 from .base import *
-from .multiCurrency import MultiCurrencyAmount, embeddedOrLatestRatesFor, sumCurrencyAmounts, amountInJPY, totalAdjustedAmount, totalAdjustedAmountAsJPY, totalRawAmount, totalRawAmountAsJPY
+from .multiCurrency import MultiCurrencyAmount, embeddedOrNearestRatesFor, sumCurrencyAmounts, amountInJPY, totalAdjustedAmount, totalAdjustedAmountAsJPY, totalRawAmount, totalRawAmountAsJPY
 from typing import Callable, DefaultDict, FrozenSet, Generator, Iterable, List, Dict, Optional, Set, Tuple, TypeVar, Union, cast
 from collections import OrderedDict
 from .processes.sharedMatchings import *
@@ -46,7 +46,7 @@ def transListToHtmlTable(trans: Iterable[Transaction], colorOn=False):
         else:
             # TODO: Better support for other currencies.
             colorCode = colorCodeForJPYAmount(
-                amountInJPY(t.adjustedAmount, embeddedOrLatestRatesFor(t))
+                amountInJPY(t.adjustedAmount, embeddedOrNearestRatesFor(t))
             )
         style = f"background-color: {colorCode}" if colorOn else ""
         return f"""

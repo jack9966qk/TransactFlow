@@ -30,7 +30,7 @@ class DinersPaths:
     timestampPath: str
 
 @dataclass(frozen=True)
-class AmexJpPaths:
+class AmexPaths:
     convertedDir: str
     timestampPath: str
 
@@ -81,7 +81,8 @@ class ImporterConfig:
     smbcCard: Optional[SmbcCardPaths] = None
     jcb: Optional[JcbPaths] = None
     diners: Optional[DinersPaths] = None
-    amexJp: Optional[AmexJpPaths] = None
+    amexJp: Optional[AmexPaths] = None
+    amexUs: Optional[AmexPaths] = None
     revolut: Optional[RevolutPaths] = None
     sbi: Optional[SbiPaths] = None
     manualRecord: Optional[ManualRecordPaths] = None

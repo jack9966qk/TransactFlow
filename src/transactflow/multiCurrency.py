@@ -1,6 +1,9 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
+from datetime import timedelta
 from functools import reduce
 from typing import Iterable, Optional
+
+from transactflow.usdJpy import USDJPY_HISTORY
 
 from .base import *
 from .rates import getOrRetrieveLatestRates
@@ -81,16 +84,23 @@ def amountInJPY(amount: MoneyAmount, exchangeRates: Optional[ExchangeRates] = No
     # TODO: Add support for other scenarios.
     assert(False)
 
-def embeddedOrLatestRatesFor(transaction: Transaction) -> Optional[ExchangeRates]:
+def embeddedOrNearestRatesFor(transaction: Transaction) -> ExchangeRates:
     rates = transaction.referencedExchangeRates
-    if (
+    if transaction.date < Date.today():
+        if rates.USDJPYRate is None:
+            nearestDate = transaction.date
+            for _ in range(5):
+                if nearestDate in USDJPY_HISTORY: break
+                nearestDate -= timedelta(days=1)
+            assert nearestDate in USDJPY_HISTORY
+            rates = replace(rates, USDJPYRate=USDJPY_HISTORY[nearestDate])
+        if isinstance(transaction.rawAmount.currency, StockUnit):
+            assert rates.USDPerStockUnitShare is not None
+    elif (
         rates.USDJPYRate is None and
         rates.USDPerStockUnitShare is None and
         isinstance(transaction.rawAmount.currency, StockUnit)
-        # and transaction.date > Date.today()
     ):
-        # if transaction.date <= Date.today():
-            # print(f"WARNING: using latest rates for transaction at {transaction.date}")
         currency = transaction.rawAmount.currency
         stockUnits = frozenset([currency]) if isinstance(currency, StockUnit) else frozenset()
         retrievedRates = getOrRetrieveLatestRates(frozenset(stockUnits))
@@ -105,12 +115,12 @@ def embeddedOrLatestRatesFor(transaction: Transaction) -> Optional[ExchangeRates
 
 def totalAdjustedAmountAsJPY(transactions: Iterable[Transaction]) -> float:
     return sum(
-        amountInJPY(t.adjustedAmount, embeddedOrLatestRatesFor(t))
+        amountInJPY(t.adjustedAmount, embeddedOrNearestRatesFor(t))
         for t in transactions
     )
 
 def totalRawAmountAsJPY(transactions: Iterable[Transaction]) -> float:
     return sum(
-        amountInJPY(t.rawAmount, embeddedOrLatestRatesFor(t))
+        amountInJPY(t.rawAmount, embeddedOrNearestRatesFor(t))
         for t in transactions
     )
