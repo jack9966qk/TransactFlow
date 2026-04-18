@@ -3,17 +3,16 @@ from datetime import datetime
 from pathlib import Path
 
 from .common import writeLocalTimeString
-from .config import AmexJpRetrievalConfig
+from .config import AmexRetrievalConfig
 import xlrd
 import openpyxl
-import openpyxl.worksheet.worksheet
 
-def moveFileForYearIntoDataDir(filePath: Path, name: str, config: AmexJpRetrievalConfig):
+def moveFileForYearIntoDataDir(filePath: Path, name: str, config: AmexRetrievalConfig):
     moveToPath = config.yearsDir / f"{name}.xlsx"
     if moveToPath.exists(): moveToPath.unlink()
     filePath.rename(moveToPath)
 
-def convertYearsXLSToCSV(config: AmexJpRetrievalConfig):
+def convertYearsXLSToCSV(config: AmexRetrievalConfig):
     # Remove existing converted files.
     for existing in config.convertedDir.iterdir():
         existing.unlink()
@@ -32,7 +31,7 @@ def convertYearsXLSToCSV(config: AmexJpRetrievalConfig):
             ]
         elif ext == ".xlsx":
             workbook = openpyxl.load_workbook(filename=child, read_only=True)
-            assert(workbook.sheetnames[0] == "ご利用履歴")
+            assert(workbook.sheetnames[0] in ["ご利用履歴", "Transaction Details"])
             sheet = workbook.worksheets[0]
             cellValues = [
                 [applyLineBreakEscape("" if item is None else str(item)) for item in row]
@@ -49,7 +48,7 @@ def convertYearsXLSToCSV(config: AmexJpRetrievalConfig):
             csvWriter = csv.writer(outFile)
             for row in cellValues: csvWriter.writerow(row)
 
-def updateFilesWithDownloadedXLSX(filePath: Path, name: str, config: AmexJpRetrievalConfig):
+def updateFilesWithDownloadedXLSX(filePath: Path, name: str, config: AmexRetrievalConfig):
     moveFileForYearIntoDataDir(filePath, name, config)
     convertYearsXLSToCSV(config)
     writeLocalTimeString(config.timestampPath)

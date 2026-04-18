@@ -43,7 +43,7 @@ class SmbcCardRetrievalConfig:
 
 
 @dataclass(frozen=True)
-class AmexJpRetrievalConfig:
+class AmexRetrievalConfig:
     yearsDir: Path
     convertedDir: Path
     timestampPath: Path
@@ -80,7 +80,8 @@ class RetrievalConfig:
     chromeDriverPath: Optional[Path] = None
     prestia: Optional[PrestiaRetrievalConfig] = None
     smbcCard: Optional[SmbcCardRetrievalConfig] = None
-    amexJp: Optional[AmexJpRetrievalConfig] = None
+    amexJp: Optional[AmexRetrievalConfig] = None
+    amexUs: Optional[AmexRetrievalConfig] = None
     suica: Optional[SuicaRetrievalConfig] = None
 
     def __post_init__(self) -> None:

@@ -1,4 +1,5 @@
 from datetime import datetime
+from enum import Enum
 from pathlib import Path
 
 from selenium import webdriver
@@ -25,7 +26,7 @@ import nodriver as uc
 
 from . import prestia, amexJp, suica, smbcCard
 from .config import (
-    AmexJpRetrievalConfig,
+    AmexRetrievalConfig,
     Browser,
     PrestiaRetrievalConfig,
     RetrievalConfig,
@@ -448,22 +449,36 @@ def downloadMobileSuicaAsTSV(
 async def randomSleep(minSeconds: float, maxSeconds: float):
     await asyncio.sleep(random.uniform(minSeconds, maxSeconds))
 
-async def downloadAMEXJP2026XLS(
+
+class AMEXRegion(Enum):
+    JP = "JP"
+    US = "US"
+
+
+async def downloadAMEX2026XLS(
     browser: "uc.Browser",
     downloadDir: Path,
     credentialsDir: Path,
-    amexJpConfig: AmexJpRetrievalConfig,
+    amexConfig: AmexRetrievalConfig,
+    region: AMEXRegion,
 ):
-    userId = amexJpConfig.userId
+    userId = amexConfig.userId
     year2026 = datetime.now().year
     if year2026 != 2026:
         # Need to support multi year, or do it manually by downloading the 2026 full record into
         # the data directory, and update the code to read and save 2027 data.
         assert(False)
 
+    def loginURL():
+        match region:
+            case AMEXRegion.JP:
+                return "https://www.americanexpress.com/ja-jp/account/login"
+            case AMEXRegion.US:
+                return "https://www.americanexpress.com/en-us/account/login"
+
     # Sign in page. nodriver's `send_keys` dispatches real CDP key events one at a time,
     # which avoids the one-shot DOM value assignment that bot detectors flag.
-    tab = await browser.get("https://www.americanexpress.com/ja-jp/account/login")
+    tab = await browser.get(loginURL())
     await randomSleep(1.5, 3.0)
 
     userField = await tab.select("#eliloUserID")
@@ -471,14 +486,25 @@ async def downloadAMEXJP2026XLS(
     await randomSleep(0.4, 1.0)
 
     passField = await tab.select("#eliloPassword")
-    await passField.send_keys(readCredential(credentialsDir, "amex-jp"))
+    match region:
+        case AMEXRegion.JP:
+            await passField.send_keys(readCredential(credentialsDir, "amex-jp"))
+        case AMEXRegion.US:
+            await passField.send_keys(readCredential(credentialsDir, "amex-us"))
     await randomSleep(0.6, 1.4)
 
     submitButton = await tab.select("#loginSubmit")
     await submitButton.click()
 
-    verificationHeading = await tab.xpath(
-        '//h2[normalize-space()="カード情報の認証:認証コード"]', timeout=10)
+    # Verification page
+    verificationHeading = None
+    match region:
+        case AMEXRegion.JP:
+            verificationHeading = await tab.xpath(
+                '//h2[normalize-space()="カード情報の認証:認証コード"]', timeout=10)
+        case AMEXRegion.US:
+            verificationHeading = await tab.xpath(
+                '//h1[normalize-space()="Verify your identity"]', timeout=10)
     if verificationHeading:
         input("Please finish verification and proceed, press enter when the dashboard page loads...")
 
@@ -490,38 +516,78 @@ async def downloadAMEXJP2026XLS(
         await popupCloseButtons[0].click()
         await randomSleep(0.4, 0.9)
 
-    usageButton = await tab.select('button[title="ご利用状況"]')
-    await usageButton.click()
-    await randomSleep(0.8, 1.6)
-    historyLink = await tab.select('a[title="ご利用履歴"]')
-    await historyLink.click()
+    match region:
+        case AMEXRegion.JP:
+            usageButton = await tab.select('button[title="ご利用状況"]')
+            await usageButton.click()
+            await randomSleep(0.8, 1.6)
+            historyLink = await tab.select('a[title="ご利用履歴"]')
+            await historyLink.click()
+        case AMEXRegion.US:
+            historyLink = await tab.select('a[title="Statements & Activity"]')
+            await historyLink.click()
+
 
     # History page
-    await randomSleep(3.0, 5.0)
-    viewByYearsButton = await tab.select(
-        '[data-module-name="axp-activity-navigation/Navigation"] button[title="年ごとに見る"]')
-    await viewByYearsButton.click()
-    await randomSleep(0.8, 1.5)
-    thisYearOption = await tab.select(
-        f'[data-module-name="axp-activity-navigation/Navigation"] a[title="{year2026}"]')
-    await thisYearOption.click()
+    match region:
+        case AMEXRegion.JP:
+            await randomSleep(3.0, 5.0)
+            viewByYearsButton = await tab.select(
+                '[data-module-name="axp-activity-navigation/Navigation"] button[title="年ごとに見る"]')
+            await viewByYearsButton.click()
+            await randomSleep(0.8, 1.5)
+            thisYearOption = await tab.select(
+                f'[data-module-name="axp-activity-navigation/Navigation"] a[title="{year2026}"]')
+            await thisYearOption.click()
 
-    await randomSleep(0.6, 1.2)
-    downloadIcon = await tab.select("#action-icon-dls-icon-download-")
-    await downloadIcon.click()
+            await randomSleep(0.6, 1.2)
+            downloadIcon = await tab.select("#action-icon-dls-icon-download-")
+            await downloadIcon.click()
 
-    await randomSleep(0.4, 0.9)
-    excelOption = await tab.select(
-        'label[for="axp-activity-download-body-selection-options-type_excel"]')
-    await excelOption.click()
+            await randomSleep(0.4, 0.9)
+            excelOption = await tab.select(
+                'label[for="axp-activity-download-body-selection-options-type_excel"]')
+            await excelOption.click()
 
-    await randomSleep(0.4, 0.9)
-    downloadButton = await tab.select('button[title="ダウンロード"]')
-    await downloadButton.click()
+            await randomSleep(0.4, 0.9)
+            downloadButton = await tab.select('button[title="ダウンロード"]')
+            await downloadButton.click()
+        case AMEXRegion.US:
+            await randomSleep(3.0, 5.0)
+            last30DaysSpans = await tab.xpath(
+                '//span[normalize-space()="Last 30 Days"]', timeout=10)
+            last30DaysSpan = last30DaysSpans[0]
+            assert last30DaysSpan is not None
+            await last30DaysSpan.click()
+            await randomSleep(0.8, 1.5)
+
+            yearToDateOptions = await tab.xpath(
+                f'//div[normalize-space()="{year2026} Year To Date"]', timeout=10)
+            yearToDateOption = yearToDateOptions[0]
+            assert yearToDateOption is not None
+            await yearToDateOption.click()
+            await randomSleep(0.6, 1.2)
+
+            downloadButton = await tab.select('button[title="Download"]')
+            assert downloadButton is not None
+            await downloadButton.click()
+            await randomSleep(0.4, 0.9)
+
+            excelLabels = await tab.xpath(
+                '//label[contains(normalize-space(), "Excel")]', timeout=10)
+            excelLabel = excelLabels[0]
+            assert excelLabel is not None
+            await excelLabel.click()
+            await randomSleep(0.4, 0.9)
+
+            excelDownloadButton = await tab.select(
+                'button[title="Download"][element="excel"]')
+            assert excelDownloadButton is not None
+            await excelDownloadButton.click()
 
     downloadedFilePath = downloadDir / AMEX_DOWNLOAD_FILE_NAME
     busyWaitForAnyFile([downloadedFilePath])
-    amexJp.updateFilesWithDownloadedXLSX(downloadedFilePath, f"{year2026}", amexJpConfig)
+    amexJp.updateFilesWithDownloadedXLSX(downloadedFilePath, f"{year2026}", amexConfig)
 
 
 def makeBrowserFactory(config: RetrievalConfig) -> Callable[[], RemoteWebDriver]:
@@ -548,8 +614,16 @@ def run(config: RetrievalConfig):
         useNoDriver(
             amexJpConfig.userDataDir,
             downloadDir,
-            lambda browser: downloadAMEXJP2026XLS(
-                browser, downloadDir, credentialsDir, amexJpConfig),
+            lambda browser: downloadAMEX2026XLS(
+                browser, downloadDir, credentialsDir, amexJpConfig, AMEXRegion.JP),
+        )
+
+    if (amexUsConfig := config.amexUs) is not None:
+        useNoDriver(
+            amexUsConfig.userDataDir,
+            downloadDir,
+            lambda browser: downloadAMEX2026XLS(
+                browser, downloadDir, credentialsDir, amexUsConfig, AMEXRegion.US),
         )
 
     with SeleniumHandle(
