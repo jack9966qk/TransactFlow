@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from pathlib import Path
 from typing import Callable, Dict, List, Optional, Tuple
 
 from .base import Date, StockUnit, Transaction
@@ -33,6 +34,11 @@ class DinersPaths:
 class AmexPaths:
     convertedDir: str
     timestampPath: str
+
+@dataclass(frozen=True)
+class HsbcUsPaths:
+    yearsOfxDir: Path
+    timestampPath: Path
 
 @dataclass(frozen=True)
 class RevolutPaths:
@@ -85,6 +91,7 @@ class ImporterConfig:
     amexUs: Optional[AmexPaths] = None
     revolut: Optional[RevolutPaths] = None
     sbi: Optional[SbiPaths] = None
+    hsbcUs: Optional[HsbcUsPaths] = None
     manualRecord: Optional[ManualRecordPaths] = None
     morganStanley: Optional[MorganStanleyImportConfig] = None
     amazonGiftCard: Optional[AmazonGiftCardConfig] = None
