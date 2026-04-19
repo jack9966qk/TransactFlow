@@ -380,7 +380,8 @@ class LabelSetAlias(Enum):
     MONTHS_2023 = "Months in 2023"
     MONTHS_2024 = "Months in 2024"
     MONTHS_2025 = "Months in 2025"
-    MONTHS_2025_WITH_ONLY_FORECAST = "Months in 2025 with only forecast"
+    MONTHS_2026 = "Months in 2026"
+    MONTHS_2026_WITH_ONLY_FORECAST = "Months in 2026 with only forecast"
     MONTHS_FROM_2020 = "Months from 2020"
     ALL_MONTHS = "All Months"
     ALL_YEARS = "All Years"
@@ -403,12 +404,14 @@ class LabelSetAlias(Enum):
             return len(label) == len("YYYY-MM-DD~") and label[:4] == "2024"
         if self == LabelSetAlias.MONTHS_2025:
             return len(label) == len("YYYY-MM-DD~") and label[:4] == "2025"
+        if self == LabelSetAlias.MONTHS_2026:
+            return len(label) == len("YYYY-MM-DD~") and label[:4] == "2026"
         if self == LabelSetAlias.MONTHS_FROM_2020:
             return len(label) == len("YYYY-MM-DD~") and int(label[:4]) >= 2020
-        if self == LabelSetAlias.MONTHS_2025_WITH_ONLY_FORECAST:
+        if self == LabelSetAlias.MONTHS_2026_WITH_ONLY_FORECAST:
             return (
                 len(label) == len("YYYY-MM-DD~") and
-                label[:4] == "2025" and
+                label[:4] == "2026" and
                 len(group) > 1 and
                 all(t.isForecast for t in group)
             )

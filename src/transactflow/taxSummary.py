@@ -1,9 +1,11 @@
 from os import read
+from typing import Callable, Dict, List, Optional, Tuple
 from transactflow.base import *
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from transactflow.multiCurrency import totalAdjustedAmountAsJPY
 from transactflow.taxCalculation.nationalTaxCalculation import NationalTaxCalculator, DependentsConfig
 import transactflow.taxCalculation.localTaxCalculation as localTaxCalculation
+from transactflow.userConfig import UserConfig
 
 @dataclass()
 class TaxEstimationInfo:
@@ -360,13 +362,14 @@ def printTaxSummary(summary: TaxSummary):
 
 def printYearlyTaxSummary(
     year: int,
+    userConfig: UserConfig,
     customizeSummary: Optional[Callable[[TaxSummary], None]] = None,
     bonusOverride: Optional[float] = None,
     equityOverride: Optional[float] = None
 ):
     # Lazy import of `run` to avoid circular dependency:
     from transactflow.processes.runAll import run
-    transactions = run(includeTaxProcesses=False)
+    transactions = run(userConfig, includeTaxProcesses=False)
     summary = yearlyTaxSummaryFromTransactions(
         year=year,
         estimateFullYear=True,

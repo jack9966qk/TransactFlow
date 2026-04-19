@@ -4,7 +4,7 @@ import logging
 import math
 
 # During last check, NTA webpages say: "[令和4年4月1日現在法令等]"
-SUPPORTED_YEARS = [2019, 2020, 2021, 2022, 2023, 2024, 2025]
+SUPPORTED_YEARS = [2019, 2020, 2021, 2022, 2023, 2024, 2025, 2026]
 
 @dataclass
 class DependentsConfig:

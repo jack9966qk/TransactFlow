@@ -582,6 +582,7 @@ def collectAndDistributeTax(
             def absTaxQuantityFor(config: TaxRedistributionConfig) -> float:
                 amount = config.getChargedTaxAbsAmount(transaction)
                 if amount > 0:
+                    assert transaction.rawAmount.currency == JPY
                     assert(transaction.adjustedAmount.quantity < 0)
                     assert(amount <= abs(transaction.adjustedAmount.quantity))
                 return amount
@@ -610,8 +611,6 @@ def collectAndDistributeTax(
                 amountForCat = mapping.get(category, None)
                 if amountForCat is None: continue
                 totalAmountForAccount[t.account] += amountForCat
-            # if JCB_CREDIT_CARD in totalAmountForAccount:
-            #     breakpoint()
             totalChargedAmount = sumSingleCurrencyAmounts(totalAmountForAccount.values())
             if config.verifyTotalTaxAmount is not None:
                 assert(totalChargedAmount == config.verifyTotalTaxAmount)

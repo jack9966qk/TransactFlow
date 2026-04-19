@@ -10,7 +10,7 @@ import math
 # 令和4年1月1日現在、渋谷区内に住所がある人に対して、
 # 令和3年の1月から12月までの1年間の所得を基礎に税額を算出します。
 SUPPORTED_YEARS = [2019, 2020, 2021]
-UNSURE_YEARS = [2022, 2023, 2024, 2025]
+UNSURE_YEARS = [2022, 2023, 2024, 2025, 2026]
 
 @dataclass
 class LocalTaxCalculator:
