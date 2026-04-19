@@ -1,8 +1,101 @@
-from typing import List
+from collections import defaultdict
+from dataclasses import dataclass
+from pathlib import Path
+from typing import Callable, Dict, List, Optional, Tuple
 from ..base import *
 from ..multiCurrency import MultiCurrencyAmount
 from ..process import Process, funcMatching, funcProcess, takeFirstMatch
 from ..processes.payslipAnnotationItem import PayslipAnnotationItem
+import csv
+from dateutil.parser import parse as parseDate
+
+@dataclass
+class PayslipAnnotationItemParserState:
+    date: Date
+    type: str
+    sourceLocation: Optional[Tuple[str, int]] = None
+    gross: float = 0
+    healthInsurance: float = 0
+    welfare: float = 0
+    unemplIns: float = 0
+    pensionVoluntary: float = 0
+    nationalTax: float = 0
+    localTax: float = 0
+    yearEndAdj: float = 0
+    miscDeduction: float = 0
+    housingBenefitTaxable: float = 0
+    housingBenefitNonTaxable: float = 0
+    reimbursement: float = 0
+    payable: float = 0
+
+    def convertToAnnotation(self) -> PayslipAnnotationItem:
+        return PayslipAnnotationItem(
+            sourceLocation=self.sourceLocation,
+            date=self.date,
+            type=self.type,
+            gross=self.gross,
+            healthInsurance=self.healthInsurance,
+            welfare=self.welfare,
+            unemplIns=self.unemplIns,
+            pensionVoluntary=self.pensionVoluntary,
+            nationalTax=self.nationalTax,
+            localTax=self.localTax,
+            yearEndAdj=self.yearEndAdj,
+            miscDeduction=self.miscDeduction,
+            housingBenefitTaxable=self.housingBenefitTaxable,
+            housingBenefitNonTaxable=self.housingBenefitNonTaxable,
+            reimbursement=self.reimbursement,
+            payable=self.payable
+        )
+
+def payslipAnnotationsFromTSV(
+    tsvPath: Path,
+    datesPath: Path,
+    updateParserState: Callable[[PayslipAnnotationItemParserState, Dict[str, str]]]
+) -> List[PayslipAnnotationItem]:
+    paymentTypes = ["Payroll", "Bonus"]
+    dates = iter([
+        parseDate(s).date()
+        for s in datesPath.read_text().split("\n") if len(s) > 0
+    ])
+    activeDate: Date | None = None
+    paymentTypesToParserStateForMonth: dict[
+        tuple[int, int], dict[str, PayslipAnnotationItemParserState]
+    ] = defaultdict(dict)
+    with open(tsvPath) as f:
+        reader = csv.DictReader(f, delimiter="\t")
+        for row in reader:
+            year = int(row["Year"])
+            month = int(row["Month"])
+            paymentType = row["Type"]
+            assert paymentType in paymentTypes
+            parserStatesByType = paymentTypesToParserStateForMonth[(year, month)]
+            parserState = parserStatesByType.get(paymentType, None)
+            if parserState is None:
+                activeDate = next(dates)
+                if paymentType == "Payroll":
+                    annotationType = "salary"
+                elif paymentType == "Bonus":
+                    annotationType = "bonus"
+                else:
+                    assert(False)
+                parserState = PayslipAnnotationItemParserState(
+                    date=activeDate,
+                    type=annotationType,
+                    sourceLocation=(str(tsvPath), reader.line_num))
+                parserStatesByType[paymentType] = parserState
+            assert activeDate is not None
+            assert activeDate.year == year
+            assert activeDate.month == month
+            updateParserState(parserState, row)
+    def genAnnotationItems():
+        months = sorted(paymentTypesToParserStateForMonth.keys())
+        for yearMonth in months:
+            parserStatesByType = paymentTypesToParserStateForMonth[yearMonth]
+            for paymentType in paymentTypes:
+                if paymentType not in parserStatesByType: continue
+                yield parserStatesByType[paymentType].convertToAnnotation()
+    return list(genAnnotationItems())
 
 def expectedTotalBalanceDelta(annotations: List[PayslipAnnotationItem]) -> MultiCurrencyAmount:
     totalPensionVoluntaryQuantity = sum(item.pensionVoluntary for item in annotations)
