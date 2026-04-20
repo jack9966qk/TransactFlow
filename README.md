@@ -63,6 +63,42 @@ print(netWorthReport(runner.run(config)))
 
 ## Design
 
+Here is an overview of an example setup with retrivers, importers and analysis modules:
+
+```mermaid
+flowchart TD
+    BankXSite[BankX\nWebsite] --> BankXRetrievalModule[BankX\nRetrieval Module]
+    BrokerYPortal[BrokerY\nPortal] --> BrokerYRetrievalModule[BrokerY\nRetrieval Module]
+    BankXRetrievalModule --> BankXData([BankX\nData])
+    BrokerYRetrievalModule --> BrokerYData([BrokerY\nData])
+    BankXData --> BankXImporter[BankX\nImporter]
+    BrokerYData --> BrokerYImporter[BrokerY\nImporter]
+
+    subgraph Retrival Module [ ]
+        BankXRetrievalModule
+        BrokerYRetrievalModule
+    end
+
+    subgraph Pipeline [ ]
+        EmptyTransactionsList([Empty Transactions List]) --> BankXImporter
+        BankXImporter -->|Transactions| BrokerYImporter
+        BrokerYImporter -->|Transactions| CategorizationProcesses[Categorization\nProcesses]
+        CategorizationProcesses -->|Transactions| TaxCalculationProcesses[Tax Calculaion\nProcesses]
+        TaxCalculationProcesses -->|Transactions| ForecastProcesses[Forecast\nProcesses]
+        ForecastProcesses --> FinalizedTransactions([Finalized Transactions List])
+    end
+
+    subgraph Analysis [ ]
+        AnalysisProvider
+        AnalysisProvider --> AnalysisServer[Analysis Server]
+    end
+
+    FinalizedTransactions --> AnalysisProvider[Analysis Provider]
+    AnalysisProvider --> JupyterNotebook[Jupyter Notebook]
+    AnalysisServer --> WebDashboard[Web Dashboard]
+    AnalysisServer --> CustomClient[Custom Clients...]
+```
+
 ### Transaction
 
 Transaction is the basic unit of financial record. A list of transactions represent the single source of truth of the financial state. Transactions are meant to be immutable, so that modifications to a transaction are performed by creating a new version of the transaction. Specifically, modifications of amounts are tracked so that the effects of the system can be understood more easily.
