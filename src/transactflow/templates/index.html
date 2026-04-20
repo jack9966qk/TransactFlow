@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TransactFlow</title>
+    <link rel="stylesheet" href="/static/app.css">
+    <script src="/static/plotly.min.js" charset="utf-8"></script>
+</head>
+<body>
+    <header>
+        <h1>TransactFlow</h1>
+        <div id="statusBar" class="status-bar">Loading…</div>
+    </header>
+
+    <nav class="tabs" id="tabs">
+        <button class="tab active" data-tab="overview">Overview</button>
+        <button class="tab" data-tab="charts">Charts</button>
+        <button class="tab" data-tab="transactions">Transactions</button>
+        <button class="tab" data-tab="shops">Shop Distribution</button>
+    </nav>
+
+    <aside id="filterPanel" class="filter-panel">
+        <h2>Filter</h2>
+
+        <label>Time interval
+            <select id="labelOption"></select>
+        </label>
+
+        <label>Description contains
+            <input id="descriptionContains" type="text">
+        </label>
+
+        <label>Amount from
+            <input id="amountFrom" type="number" value="-100000000">
+        </label>
+
+        <label>Amount until
+            <input id="amountUntil" type="number" value="100000000">
+        </label>
+
+        <label class="checkbox">
+            <input id="filterByRawAmount" type="checkbox">
+            Filter by raw amount
+        </label>
+
+        <label>Record account
+            <select id="recordAccount"></select>
+        </label>
+
+        <label>Category filter
+            <select id="categoryFilter"></select>
+        </label>
+
+        <label class="checkbox">
+            <input id="exactMatchCategory" type="checkbox">
+            Exact match category
+        </label>
+
+        <label>Segmented display
+            <select id="segmentedDisplay"></select>
+        </label>
+
+        <label>Categorize option
+            <select id="categorizeOption"></select>
+        </label>
+
+        <label>Deduct income option
+            <select id="deductIncomeOption"></select>
+        </label>
+
+        <label class="checkbox">
+            <input id="includeRemaining" type="checkbox">
+            Include remaining
+        </label>
+
+        <label class="checkbox">
+            <input id="averageByGroup" type="checkbox">
+            Average by group
+        </label>
+    </aside>
+
+    <main>
+        <section id="tab-overview" class="tab-panel active">
+            <h2>Overview</h2>
+            <div id="overviewContent" class="text-panel">Loading overview…</div>
+        </section>
+
+        <section id="tab-charts" class="tab-panel">
+            <h2>Bar Chart</h2>
+            <div id="barChart" class="chart"></div>
+            <p class="chart-hint">Click a bar to filter the pie chart below to that interval.</p>
+
+            <h2>Pie Chart (Expenses)</h2>
+            <div id="pieChart" class="chart"></div>
+            <pre id="pieDescription" class="text-panel small"></pre>
+        </section>
+
+        <section id="tab-transactions" class="tab-panel">
+            <h2>Transactions</h2>
+            <div id="transactionStats" class="text-panel small"></div>
+            <label class="checkbox">
+                <input id="colorOn" type="checkbox" checked>
+                Color by amount
+            </label>
+            <div id="transactionsTableWrap"></div>
+        </section>
+
+        <section id="tab-shops" class="tab-panel">
+            <h2>Shop Distribution</h2>
+            <div id="shopList" class="text-panel"></div>
+        </section>
+    </main>
+
+    <script src="/static/app.js"></script>
+</body>
+</html>

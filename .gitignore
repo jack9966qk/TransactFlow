@@ -10,3 +10,7 @@ haskell_exp/dist-newstyle/
 src/transactflow/proto_gen/transactflow_pb2.py
 src/transactflow/proto_gen/transactflow_pb2.pyi
 haskell_exp/gen/
+
+# Frontend build artifacts
+src/transactflow/web/dist/
+src/transactflow/web/node_modules/

@@ -12,30 +12,6 @@ from collections import OrderedDict
 from .processes.sharedMatchings import *
 import itertools
 
-# @dataclass
-# class StringTable:
-#     class Cell:
-#         text: str
-#         isHeader: bool = False
-#         htmlStyle: Optional[str] = None
-#     cells: List[List["StringTable.Cell"]]
-
-#     @property
-#     def asHTMLTable(self) -> str:
-#         def renderCell(cell: "StringTable.Cell"):
-#             tag = "th" if cell.isHeader else "td"
-#             attr = f' style="{style}"' if (style := cell.htmlStyle) is not None else ""
-#             yield f"<{tag}{attr}>{cell.text}</{tag}>"
-#         def renderRow(row: List["StringTable.Cell"]):
-#             yield f"<tr>"
-#             for cell in row: yield from renderCell(cell)
-#             yield f"</tr>"
-#         def renderTable():
-#             yield "<table>"
-#             for row in self.cells: yield from renderRow(row)
-#             yield "</table>"
-#         return "\n".join(list(renderTable()))
-
 def transListToHtmlTable(trans: Iterable[Transaction], colorOn=False):
     def toHtmlRow(t: Transaction):
         if any(
@@ -564,8 +540,24 @@ class BarChartData:
 class PieChartData:
     labels: List[GroupLabel]
     categoryToAmount: Dict[AnnotatedCategory, float]
+    orderedCategories: List[AnnotatedCategory]
     otherCategoryToAmount: Optional[List[Tuple[AnnotatedCategory, float]]] = None
     isGroupAverage: bool = False
+
+    @property
+    def orderedCategoryToAmountPairs(self) -> List[Tuple[AnnotatedCategory, float]]:
+        orderIndex = { c: i for i, c in enumerate(self.orderedCategories) }
+        return sorted(
+            self.categoryToAmount.items(),
+            key=lambda p: orderIndex.get(p[0], len(orderIndex)))
+
+    @property
+    def orderedOtherCategoryToAmount(self) -> Optional[List[Tuple[AnnotatedCategory, float]]]:
+        if self.otherCategoryToAmount is None: return None
+        orderIndex = { c: i for i, c in enumerate(self.orderedCategories) }
+        return sorted(
+            self.otherCategoryToAmount,
+            key=lambda p: orderIndex.get(p[0], len(orderIndex)))
 
     @property
     def longDescription(self) -> str:
@@ -591,7 +583,17 @@ class PieChartData:
         for cat, am in self.categoryToAmount.items():
             newCat = categorizeOption.transformAnnotatedCategory(cat)
             newCategoryToAmount[newCat] = newCategoryToAmount.get(newCat, 0.0) + am
-        return replace(self, categoryToAmount=newCategoryToAmount)
+        seen: Set[AnnotatedCategory] = set()
+        newOrderedCategories: List[AnnotatedCategory] = []
+        for c in self.orderedCategories:
+            transformed = categorizeOption.transformAnnotatedCategory(c)
+            if transformed in seen: continue
+            seen.add(transformed)
+            newOrderedCategories.append(transformed)
+        return replace(
+            self,
+            categoryToAmount=newCategoryToAmount,
+            orderedCategories=newOrderedCategories)
 
     def withMinorGroupsAsOther(self) -> "PieChartData":
         pairs = list(self.categoryToAmount.items())
@@ -793,7 +795,7 @@ class AnalysisProvider:
         def salarySectionedGroupLabel(trans):
             minDate, _ = minMaxDateOf(trans)
             return f"{minDate}~"
-        years = [2019, 2020, 2021, 2022, 2023, 2024, 2025]
+        years = [2019, 2020, 2021, 2022, 2023, 2024, 2025, 2026]
         self.labels = (
             ["All"] +
             [str(year) for year in years] +
@@ -868,7 +870,10 @@ class AnalysisProvider:
         stats = TransactionSetStats(list(itertools.chain(*groupedMatchingTrans.values())))
         catToAmount = stats.expenseSummary(includeRemaining).amountsByCategory
         if len(catToAmount) == 0: return None
-        pieChartData = PieChartData(labels=labels, categoryToAmount=catToAmount)
+        pieChartData = PieChartData(
+            labels=labels,
+            categoryToAmount=catToAmount,
+            orderedCategories=self.categories)
         deductIncomeOption.applyDeductionForPieChart(pieChartData)
         pieChartData = pieChartData.withCategoryTransformed(options.categorizeOption)
         pieChartData = pieChartData.withMinorGroupsAsOther()
