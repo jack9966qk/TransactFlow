@@ -1,9 +1,10 @@
-from typing import Iterator, Generator, List
+from typing import Generator, Iterator, List
 
 from ..base import *
 from ..base import StockUnit
+from ..capitalGainCalculation import Activity, Sell, Vest, genCapitalGain
 from ..process import Process, funcProcess, sortByDateAndMore
-from ..capitalGainCalculation import Activity, Vest, Sell, genCapitalGain
+
 
 def addCaptialGainProcess(stockUnit: StockUnit) -> Process:
     @funcProcess()

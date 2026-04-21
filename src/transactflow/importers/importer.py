@@ -1,14 +1,27 @@
-from dataclasses import dataclass
-from ..base import EXPENSE, INCOME, JPY, SOURCE_CUTOFF, Account, Currency, Date, MoneyAmount, Transaction, syntheticTransaction
-from typing import Dict, Iterator, List, Callable, Optional, TextIO, Tuple
-import itertools
 import csv
+import itertools
 import re
-from lxml import etree as ET  # type: ignore[import-untyped]
+from dataclasses import dataclass
 from pathlib import Path
-from dateutil.parser import parse as parseDate
+from typing import Callable, Dict, Iterator, List, Optional, TextIO, Tuple
 
+from dateutil.parser import parse as parseDate
+from lxml import etree as ET  # type: ignore[import-untyped]
+
+from ..base import (
+    EXPENSE,
+    INCOME,
+    JPY,
+    SOURCE_CUTOFF,
+    Account,
+    Currency,
+    Date,
+    MoneyAmount,
+    Transaction,
+    syntheticTransaction,
+)
 from ..process import sortByDateAndMore
+
 
 def readDateOfTimestampFile(path: str) -> Date:
     with open(path, "r") as f:

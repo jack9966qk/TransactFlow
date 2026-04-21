@@ -1,8 +1,13 @@
-from .helpers import assertFilesContentEqual
-from transactflow.base import *
-from transactflow.retrieval.prestia import mergePrestiaFiles
-from transactflow.retrieval.common import InconsistentLinesError, CannotFindAlignmentError
 import os
+
+from transactflow.base import *
+from transactflow.retrieval.common import (
+    CannotFindAlignmentError,
+    InconsistentLinesError,
+)
+from transactflow.retrieval.prestia import mergePrestiaFiles
+
+from .helpers import assertFilesContentEqual
 
 TEST_DATA_DIR = "test/merging_data"
 

@@ -1,11 +1,18 @@
 from datetime import date
 
 from transactflow.base import (
-    Category, Currency, ExchangeRates, MoneyAmount, Transaction,
-    EMPTY_EXCHANGE_RATES, JPY, USD, EXPENSE, INCOME, RENT,
+    EMPTY_EXCHANGE_RATES,
+    EXPENSE,
+    JPY,
+    RENT,
+    USD,
+    ExchangeRates,
+    MoneyAmount,
+    Transaction,
 )
 from transactflow.externalTransaction import (
-    fromExternalTransaction, toExternalTransaction,
+    fromExternalTransaction,
+    toExternalTransaction,
 )
 
 

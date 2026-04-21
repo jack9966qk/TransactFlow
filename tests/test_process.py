@@ -1,17 +1,32 @@
 """Tests for the process module (matching, labelling, pipeline)."""
 
 from datetime import date
+
 from transactflow.base import (
-    Transaction, MoneyAmount, Category,
-    JPY, EXPENSE, INCOME, SALARY, SHOPPING, DAILY_SHOPPING, MAJOR_SHOPPING,
-    SMBC_PRESTIA, EMPLOYER, GENERAL_EXPENSE_DESTINATION,
+    DAILY_SHOPPING,
+    EMPLOYER,
+    EXPENSE,
+    INCOME,
+    JPY,
+    MAJOR_SHOPPING,
+    SALARY,
+    SHOPPING,
+    SMBC_PRESTIA,
+    MoneyAmount,
+    Transaction,
 )
 from transactflow.process import (
-    matching, funcProcess, funcMatching, GroupedProcess,
-    labelIfMatch, EVERYTHING, satisfyAll, satisfyAny,
-    takeMatched, takeFirstMatch, mapProc, funcMapping,
-    relabelShoppingAsDaily, relabelShoppingAsMajor,
-    labelSalaryIncome, labelGeneralExpenseDestination,
+    EVERYTHING,
+    GroupedProcess,
+    funcProcess,
+    labelIfMatch,
+    matching,
+    relabelShoppingAsDaily,
+    relabelShoppingAsMajor,
+    satisfyAll,
+    satisfyAny,
+    takeFirstMatch,
+    takeMatched,
 )
 
 

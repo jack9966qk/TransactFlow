@@ -1,13 +1,15 @@
-from transactflow.multiCurrency import MultiCurrencyAmount
-from .helpers import writeTransactionsWithStat
-from transactflow.base import *
-from transactflow.process import *
-from transactflow.analysis import totalAccountBalance
-from transactflow.processes.payslipAnnotationItem import PayslipAnnotationItem
+from typing import Callable
+
 import transactflow.processes.importer
 import transactflow.processes.payslipIncome
 import transactflow.processes.runAll
-from typing import Callable
+from transactflow.analysis import totalAccountBalance
+from transactflow.base import *
+from transactflow.multiCurrency import MultiCurrencyAmount
+from transactflow.process import *
+from transactflow.processes.payslipAnnotationItem import PayslipAnnotationItem
+
+from .helpers import writeTransactionsWithStat
 
 PROCESS_OUTPUT_DIR = "test/processOutput"
 

@@ -1,7 +1,9 @@
-from dateutil.parser import parse as parseDate
 import io
 
+from dateutil.parser import parse as parseDate
+
 from transactflow.base import Date
+
 
 def makeRatesHistory():
     historyTsv = """2016-04-19	109.24

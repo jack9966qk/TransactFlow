@@ -1,14 +1,20 @@
 """Tests for CSV importers using mock data from tests/data/."""
 
 import os
-import pytest
 from datetime import date
 
 from transactflow.base import (
-    EXPENSE, INCOME, JPY, SMBC_PRESTIA, SBI_NET_BANK, REVOLUT,
-    SMBC_CREDIT_CARD, FOOD_DRINK_OUTSIDE, ENTERTAINMENT,
-    EXPECTED_INTERNAL_TRANSFER, UNPAIRED_INTERNAL_TRANSFER,
-    MoneyAmount, Transaction, CASH, GENERAL_EXPENSE_DESTINATION,
+    CASH,
+    ENTERTAINMENT,
+    EXPENSE,
+    FOOD_DRINK_OUTSIDE,
+    GENERAL_EXPENSE_DESTINATION,
+    INCOME,
+    JPY,
+    SBI_NET_BANK,
+    SMBC_PRESTIA,
+    UNPAIRED_INTERNAL_TRANSFER,
+    MoneyAmount,
 )
 
 TESTS_DIR = os.path.dirname(os.path.abspath(__file__))

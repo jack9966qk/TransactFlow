@@ -5,7 +5,6 @@ from typing import Callable, Dict, List, Optional, Tuple
 from .base import Date, StockUnit, Transaction
 from .processes.payslipAnnotationItem import PayslipAnnotationItem
 
-
 # ---------------------------------------------------------------------------
 # Importer path configs — one per data source
 # ---------------------------------------------------------------------------
@@ -115,6 +114,7 @@ class StockConfig:
 # create a circular dependency (process.py → base.py ← userConfig.py).
 # We use a plain List type at runtime; type checkers can use TYPE_CHECKING.
 from typing import TYPE_CHECKING
+
 if TYPE_CHECKING:
     from .process import Process
 

@@ -1,5 +1,6 @@
-from dataclasses import replace, dataclass
+from dataclasses import dataclass, replace
 from typing import List
+
 from ..base import (
     AMAZON_GIFT_CARD,
     JPY,

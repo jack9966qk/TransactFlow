@@ -7,6 +7,7 @@ from transactflow.importers.importer import (
     readDateOfTimestampFile,
 )
 
+
 def readHSBCUSOFXFiles(directory: Path, timestampPath: Path) -> list[Transaction]:
     transactions: list[Transaction] = []
     for childPath in directory.iterdir():

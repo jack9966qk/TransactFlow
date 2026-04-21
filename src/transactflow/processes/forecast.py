@@ -1,9 +1,11 @@
-from typing import Generator, List
-from ..base import *
 from datetime import timedelta
+from typing import Generator, List
+
+from ..base import *
 from ..multiCurrency import totalAdjustedAmountAsJPY
 from ..process import GroupedProcess, Process, funcProcess, sortByDateAndMore
 from ..userConfig import ForecastConfig
+
 
 def forecastMonthlyTransactions(
     targetYear: int

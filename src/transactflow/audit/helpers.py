@@ -1,12 +1,19 @@
+import subprocess
 from collections import Counter
+from dataclasses import fields
 from itertools import zip_longest
 from pathlib import Path
 from typing import Callable, Generator, List, Optional
+
+from transactflow.analysis import (
+    accountBalanceByAccount,
+    netWorth,
+    totalAccountBalance,
+    totalSaving,
+)
 from transactflow.base import *
-from transactflow.analysis import accountBalanceByAccount, netWorth, totalAccountBalance, totalSaving
 from transactflow.multiCurrency import totalAdjustedAmountAsJPY
-import subprocess
-from dataclasses import fields
+
 
 def filesContentEqual(path1, path2, encoding="utf-8"):
     with open(path1, "r", encoding=encoding) as f1:

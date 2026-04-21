@@ -1,7 +1,13 @@
 from pathlib import Path
 
-from .common import LineWithContext, prependWithAlignment, shiftCombinedForNewMerge, writeLocalTimeString
+from .common import (
+    LineWithContext,
+    prependWithAlignment,
+    shiftCombinedForNewMerge,
+    writeLocalTimeString,
+)
 from .config import PrestiaRetrievalConfig
+
 
 def mergePrestiaFiles(combined: Path, newSection: Path, outputPath: Path):
     def canUseAsAlignment(lineWithContext: LineWithContext):

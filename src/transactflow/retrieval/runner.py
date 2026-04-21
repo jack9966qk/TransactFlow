@@ -1,30 +1,36 @@
-from datetime import datetime
-from enum import Enum
-from pathlib import Path
-
-from selenium import webdriver
-from selenium.webdriver.support.select import Select
-from selenium.common.exceptions import ElementNotInteractableException, NoSuchElementException
-from selenium.webdriver.remote.webdriver import WebDriver as RemoteWebDriver
-from selenium.webdriver.remote.webelement import WebElement
-from selenium.webdriver.common.by import By
-from selenium.webdriver.chrome.service import Service as ChromeService
-from selenium.webdriver.firefox.options import Options as FirefoxOptions
-from selenium.webdriver.firefox.service import Service as FirefoxService
-from selenium.webdriver.support.wait import WebDriverWait
-from selenium.webdriver.support.expected_conditions import element_to_be_clickable, presence_of_element_located
-from selenium.common.exceptions import TimeoutException
-from webdriver_manager.firefox import GeckoDriverManager
-from typing import TYPE_CHECKING, Awaitable, TypeVar, Callable, Union
 import asyncio
+import csv
+import pickle
 import random
 import subprocess
 import time
-import pickle
-import csv
-import nodriver as uc
+from datetime import datetime
+from enum import Enum
+from pathlib import Path
+from typing import Awaitable, Callable, TypeVar, Union
 
-from . import amex, prestia, suica, smbcCard
+import nodriver as uc
+from selenium import webdriver
+from selenium.common.exceptions import (
+    ElementNotInteractableException,
+    NoSuchElementException,
+    TimeoutException,
+)
+from selenium.webdriver.chrome.service import Service as ChromeService
+from selenium.webdriver.common.by import By
+from selenium.webdriver.firefox.options import Options as FirefoxOptions
+from selenium.webdriver.firefox.service import Service as FirefoxService
+from selenium.webdriver.remote.webdriver import WebDriver as RemoteWebDriver
+from selenium.webdriver.remote.webelement import WebElement
+from selenium.webdriver.support.expected_conditions import (
+    element_to_be_clickable,
+    presence_of_element_located,
+)
+from selenium.webdriver.support.select import Select
+from selenium.webdriver.support.wait import WebDriverWait
+from webdriver_manager.firefox import GeckoDriverManager
+
+from . import amex, prestia, smbcCard, suica
 from .config import (
     AmexRetrievalConfig,
     Browser,

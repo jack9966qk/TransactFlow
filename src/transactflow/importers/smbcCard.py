@@ -1,11 +1,24 @@
 import os
-from ..base import EXPECTED_INTERNAL_TRANSFER, EXPENSE, INCOME, JPY, SMBC_CREDIT_CARD, MoneyAmount, Transaction, Date, sumSingleCurrencyAmounts, syntheticTransaction
-from ..retrieval.common import forEachFileToReadFrom
-from .importer import CsvImporter, addingCutoffTransactionTo, readDateOfTimestampFile
-from dateutil.parser import parse as parseDate
 from typing import List, Optional, TextIO, cast
 
+from dateutil.parser import parse as parseDate
+
+from ..base import (
+    EXPECTED_INTERNAL_TRANSFER,
+    EXPENSE,
+    INCOME,
+    JPY,
+    SMBC_CREDIT_CARD,
+    Date,
+    MoneyAmount,
+    Transaction,
+    sumSingleCurrencyAmounts,
+    syntheticTransaction,
+)
 from ..process import matching, takeMatched
+from ..retrieval.common import forEachFileToReadFrom
+from .importer import CsvImporter, addingCutoffTransactionTo, readDateOfTimestampFile
+
 
 def readSmbcCardCsvFiles(monthsDir: str, timestampPath: str) -> List[List[Transaction]]:
     transactionGroups: List[List[Transaction]] = []

@@ -1,7 +1,7 @@
 from dataclasses import dataclass
-from typing import Generator, Iterable, Iterator, List, Optional, Union
-from math import ceil
 from datetime import date
+from math import ceil
+from typing import Generator, Iterable, List, Optional, Union
 
 Date = date
 

@@ -1,5 +1,11 @@
+from .analysis import (
+    BONUS_AFTER_DEDUCTION,
+    EQUITY_AFTER_DEDUCTION,
+    OTHER,
+    REMAINING,
+    SALARY_AFTER_DEDUCTION,
+)
 from .base import *
-from .analysis import OTHER, REMAINING, SALARY_AFTER_DEDUCTION, BONUS_AFTER_DEDUCTION, EQUITY_AFTER_DEDUCTION
 
 COLORS: dict[Category, str] = {
     # Income

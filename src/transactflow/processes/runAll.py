@@ -1,12 +1,14 @@
+from typing import List, Optional
+
 from transactflow.rates import getOrRetrieveLatestRates
 
-from ..process import GroupedProcess, Process, moveSalaryToFirstOfDay, sortByDateAndMore
 from ..base import *
+from ..process import GroupedProcess, Process, moveSalaryToFirstOfDay, sortByDateAndMore
 from ..userConfig import UserConfig
-from .importer import makeProcess as makeImporterProcess
 from .capitalGain import addCaptialGainProcess
 from .forecast import makeProcess as makeForecastProcess
-from typing import List, Optional
+from .importer import makeProcess as makeImporterProcess
+
 
 def _optionalProcess(proc: Optional["Process"]) -> List["Process"]:
     return [proc] if proc is not None else []

@@ -1,9 +1,12 @@
-from typing import Dict, List, TextIO, cast, Optional
+from dataclasses import dataclass
+from typing import Dict, List, Optional, TextIO, cast
+
+from dateutil.parser import parse as parseDate
+
 from ..base import *
 from ..importers.importer import DictCsvImporter
-from dateutil.parser import parse as parseDate
-from dataclasses import dataclass
 from ..userConfig import MorganStanleyImportConfig
+
 
 @dataclass
 class VestedEquityItem:

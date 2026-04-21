@@ -1,10 +1,12 @@
 from typing import Callable, List, Optional
 
+from ..base import *
 from ..importers.amazonGiftCard import annotateAmazonGiftCardTransactions
 from ..importers.amexJp import readAmexJpCsvFiles
 from ..importers.amexUs import readAmexUsCsvFiles
-from ..importers.hsbcUs import readHSBCUSOFXFiles
 from ..importers.diners import readDinersCsvFiles
+from ..importers.hsbcUs import readHSBCUSOFXFiles
+from ..importers.importer import addingCutoffTransactionTo
 from ..importers.jcb import readJcbCsvFiles
 from ..importers.manualRecord import readManualRecordCsv
 from ..importers.morganStanley import readMorganStanleyCsv
@@ -12,12 +14,8 @@ from ..importers.prestia import readPrestiaCsv
 from ..importers.revolut import readRevolutCsv
 from ..importers.sbi import readSBINetBankCSV
 from ..importers.smbcCard import readSmbcCardCsvFiles
-from ..importers.importer import addingCutoffTransactionTo
-
-
-from ..base import *
 from ..process import EVERYTHING, GroupedProcess, Process, labelIfMatch
-from ..userConfig import ImporterConfig, MorganStanleyImportConfig
+from ..userConfig import ImporterConfig
 
 
 class ImporterProcess(Process):

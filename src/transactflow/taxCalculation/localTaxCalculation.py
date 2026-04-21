@@ -1,10 +1,8 @@
-from dataclasses import dataclass, field
 import logging
-from tabnanny import check
-from typing import Tuple
-from .nationalTaxCalculation import NationalTaxCalculator
-from .nationalTaxCalculation import DependentsConfig
 import math
+from dataclasses import dataclass, field
+
+from .nationalTaxCalculation import DependentsConfig, NationalTaxCalculator
 
 # During last check, the document says:
 # 令和4年1月1日現在、渋谷区内に住所がある人に対して、

@@ -8,6 +8,7 @@ from transactflow.usdJpy import USDJPY_HISTORY
 from .base import *
 from .rates import getOrRetrieveLatestRates
 
+
 @dataclass(frozen=True)
 class MultiCurrencyAmount:
     quantities: dict[Currency, float]

@@ -1,16 +1,38 @@
-from collections import defaultdict
+import itertools
+from collections import OrderedDict, defaultdict
 from dataclasses import dataclass, replace
 from datetime import timedelta
 from enum import Enum
+from typing import (
+    Callable,
+    DefaultDict,
+    Dict,
+    Generator,
+    Iterable,
+    List,
+    Optional,
+    Set,
+    Tuple,
+    Union,
+    cast,
+)
 
 from transactflow.userConfig import UserConfig
-from .rates import RetrivedRates, getOrRetrieveLatestRates
+
 from .base import *
-from .multiCurrency import MultiCurrencyAmount, embeddedOrNearestRatesFor, sumCurrencyAmounts, amountInJPY, totalAdjustedAmount, totalAdjustedAmountAsJPY, totalRawAmount, totalRawAmountAsJPY
-from typing import Callable, DefaultDict, FrozenSet, Generator, Iterable, List, Dict, Optional, Set, Tuple, TypeVar, Union, cast
-from collections import OrderedDict
+from .multiCurrency import (
+    MultiCurrencyAmount,
+    amountInJPY,
+    embeddedOrNearestRatesFor,
+    sumCurrencyAmounts,
+    totalAdjustedAmount,
+    totalAdjustedAmountAsJPY,
+    totalRawAmount,
+    totalRawAmountAsJPY,
+)
 from .processes.sharedMatchings import *
-import itertools
+from .rates import RetrivedRates, getOrRetrieveLatestRates
+
 
 def transListToHtmlTable(trans: Iterable[Transaction], colorOn=False):
     def toHtmlRow(t: Transaction):

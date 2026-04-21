@@ -1,11 +1,16 @@
-from calendar import c
 import os
-from ..base import AMEX_JP, EXPENSE, INCOME, JPY, SOURCE_CUTOFF, MoneyAmount, Transaction, syntheticTransaction
-from .importer import DictCsvImporter, addingCutoffTransactionTo, readDateOfTimestampFile
-from dateutil.parser import parse as parseDate
 from typing import Dict, List, Optional, TextIO, cast
 
+from dateutil.parser import parse as parseDate
+
+from ..base import AMEX_JP, EXPENSE, INCOME, JPY, MoneyAmount, Transaction
 from ..retrieval.common import forEachFileToReadFrom
+from .importer import (
+    DictCsvImporter,
+    addingCutoffTransactionTo,
+    readDateOfTimestampFile,
+)
+
 
 def readAmexJpCsvFiles(convertedDir: str, timestampPath: str) -> List[List[Transaction]]:
     transactionGroups: List[List[Transaction]] = []

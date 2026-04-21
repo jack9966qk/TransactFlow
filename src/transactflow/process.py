@@ -1,13 +1,24 @@
-import unicodedata
 import re
+import unicodedata
+from abc import ABC, abstractmethod
 from collections import defaultdict
 from dataclasses import dataclass
-from .base import *
-from typing import Dict, Generator, Iterator, List, Literal, Optional, Set, Tuple, Any, Callable, Iterable
+from typing import (
+    Any,
+    Callable,
+    Dict,
+    Generator,
+    Iterable,
+    List,
+    Literal,
+    Optional,
+    Tuple,
+)
+
 from dateutil.parser import parse as parseDate
-from abc import ABC, abstractmethod
 from tqdm import tqdm
 
+from .base import *
 from .multiCurrency import totalAdjustedAmountAsJPY
 
 __all__ = [
@@ -650,6 +661,8 @@ def sortByDateAndMore(ts: List[Transaction]):
     return sorted(ts, key=key)
 
 from itertools import groupby
+
+
 @funcProcess()
 def moveSalaryToFirstOfDay(trans: List[Transaction]) -> List[Transaction]:
     """

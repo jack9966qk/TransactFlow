@@ -1,5 +1,5 @@
 import os
-import sys
+
 import pytest
 
 TESTS_DIR = os.path.dirname(os.path.abspath(__file__))

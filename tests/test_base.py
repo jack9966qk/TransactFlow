@@ -1,16 +1,26 @@
 """Tests for base data structures."""
 
 from datetime import date
+
 from transactflow.base import (
-    Transaction, MoneyAmount,
-    EXPENSE, INCOME, SALARY, JPY, USD,
+    EMPLOYER,
     EMPTY_AMOUNT,
-    SMBC_PRESTIA, EMPLOYER,
-    syntheticTransaction, sortedByDate,
-    sumSingleCurrencyAmounts, amountsHaveSameCurrency,
-    splitIntoTimeSectionsBySalaryIncome,
-    groupAsDict, concat, mapOptional,
-    amountDeltaIsNegligible, SegmentedTotals,
+    EXPENSE,
+    INCOME,
+    JPY,
+    SALARY,
+    SMBC_PRESTIA,
+    USD,
+    MoneyAmount,
+    Transaction,
+    amountDeltaIsNegligible,
+    amountsHaveSameCurrency,
+    concat,
+    groupAsDict,
+    mapOptional,
+    sortedByDate,
+    sumSingleCurrencyAmounts,
+    syntheticTransaction,
 )
 
 

@@ -1,8 +1,14 @@
-from itertools import count
-from ..base import EXPENSE, INCOME, JPY, SBI_NET_BANK, MoneyAmount, Transaction, SMBC_PRESTIA
-from .importer import DictCsvImporter, addingCutoffTransactionTo, readDateOfTimestampFile
+from typing import Dict, List, Optional, TextIO, cast
+
 from dateutil.parser import parse as parseDate
-from typing import Dict, List, Optional, Tuple, TextIO, cast
+
+from ..base import EXPENSE, INCOME, JPY, SBI_NET_BANK, MoneyAmount, Transaction
+from .importer import (
+    DictCsvImporter,
+    addingCutoffTransactionTo,
+    readDateOfTimestampFile,
+)
+
 
 def readSBINetBankCSV(filename: str, timestampPath: str) -> List[Transaction]:
     def readNumOfLines() -> int:

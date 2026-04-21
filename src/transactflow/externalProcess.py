@@ -3,7 +3,7 @@ ExternalMatching/ExternalMapping/ExternalProcess counterparts."""
 
 from typing import Dict, List, Optional
 
-from .base import Account, Category, Date, MoneyAmount
+from .base import Account, Category, Date
 from .externalTransaction import _categoryFromProto, _categoryToProto
 from .process import (
     EVERYTHING,
@@ -15,7 +15,6 @@ from .process import (
     Matching,
     Process,
     filterProc,
-    funcMapping,
     labelIfMatch,
     mapProc,
     matching,
@@ -26,7 +25,6 @@ from .process import (
     writeCatIf,
 )
 from .proto_gen import transactflow_pb2 as pb
-
 
 # ---------------------------------------------------------------------------
 # Named-instance registries
@@ -84,8 +82,8 @@ def _registerBuiltins() -> None:
         isDailyShopping,
         isMajorShopping,
         isSalary,
-        labelGeneralExpenseDestination,
         labelExcludedIncomeIfUncategorizedIncome,
+        labelGeneralExpenseDestination,
         labelSalaryIncome,
         moveSalaryToFirstOfDay,
         relabelShoppingAsDaily,

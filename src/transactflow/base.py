@@ -1,13 +1,25 @@
 import csv
-from functools import reduce
-from inspect import currentframe, getframeinfo
 import io
 import os
-from types import FrameType
-from typing import Callable, Dict, Hashable, Iterable, Iterator, List, NamedTuple, Tuple, Optional, NewType, TypeVar, Union
-from termcolor import colored
-from datetime import date
 from dataclasses import dataclass, field, replace
+from datetime import date
+from functools import reduce
+from inspect import currentframe, getframeinfo
+from types import FrameType
+from typing import (
+    Callable,
+    Dict,
+    Hashable,
+    Iterable,
+    Iterator,
+    List,
+    NamedTuple,
+    Optional,
+    Tuple,
+    TypeVar,
+)
+
+from termcolor import colored
 
 __all__ = [
     # Type aliases

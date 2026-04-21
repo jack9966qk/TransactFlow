@@ -3,6 +3,7 @@ from pathlib import Path
 from .common import prependWithAlignment, shiftCombinedForNewMerge, writeLocalTimeString
 from .config import SuicaRetrievalConfig
 
+
 def mergeSuicaFiles(combined: Path, newSection: Path, outputPath: Path):
     def canUseAsAlignment(lineWithContext):
         if lineWithContext.lineAfter is None: return False

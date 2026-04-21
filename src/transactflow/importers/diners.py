@@ -1,11 +1,27 @@
-from calendar import c
-from datetime import timedelta
 import os
-from ..base import DINERS_CLUB, EMPTY_AMOUNT, EXPECTED_INTERNAL_TRANSFER, EXPENSE, INCOME, JPY, SMBC_CREDIT_CARD, SOURCE_CUTOFF, Date, MoneyAmount, Transaction, syntheticTransaction
-from ..retrieval.common import forEachFileToReadFrom
-from .importer import CsvImporter, RepaymentContext, addingCutoffTransactionTo, readDateOfTimestampFile
+from typing import List, Optional, TextIO, cast
+
 from dateutil.parser import parse as parseDate
-from typing import List, Optional, TextIO, cast, Tuple
+
+from ..base import (
+    DINERS_CLUB,
+    EXPECTED_INTERNAL_TRANSFER,
+    EXPENSE,
+    INCOME,
+    JPY,
+    Date,
+    MoneyAmount,
+    Transaction,
+    syntheticTransaction,
+)
+from ..retrieval.common import forEachFileToReadFrom
+from .importer import (
+    CsvImporter,
+    RepaymentContext,
+    addingCutoffTransactionTo,
+    readDateOfTimestampFile,
+)
+
 
 def readDinersCsvFiles(monthsDir: str, timestampPath: str) -> List[List[Transaction]]:
     transactionGroups: List[List[Transaction]] = []

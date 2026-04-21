@@ -1,7 +1,22 @@
-from ..base import INTERNAL_TRANSFER, REVOLUT, EXPENSE, INCOME, JPY, SOURCE_CUTOFF, UNPAIRED_INTERNAL_TRANSFER, MoneyAmount, Transaction, syntheticTransaction
-from .importer import DictCsvImporter, addingCutoffTransactionTo, readDateOfTimestampFile
-from dateutil.parser import parse as parseDate
 from typing import Dict, List, Optional, TextIO, cast
+
+from dateutil.parser import parse as parseDate
+
+from ..base import (
+    EXPENSE,
+    INCOME,
+    JPY,
+    REVOLUT,
+    UNPAIRED_INTERNAL_TRANSFER,
+    MoneyAmount,
+    Transaction,
+)
+from .importer import (
+    DictCsvImporter,
+    addingCutoffTransactionTo,
+    readDateOfTimestampFile,
+)
+
 
 def readRevolutCsv(filename: str, timestampPath: str) -> List[Transaction]:
     def parseRevolutLine(row: Dict[str, str], raw: str, lineNum: int) -> Optional[Transaction]:

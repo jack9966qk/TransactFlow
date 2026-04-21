@@ -2,10 +2,12 @@ import csv
 from datetime import datetime
 from pathlib import Path
 
+import openpyxl
+import xlrd
+
 from .common import writeLocalTimeString
 from .config import AmexRetrievalConfig
-import xlrd
-import openpyxl
+
 
 def moveFileForYearIntoDataDir(filePath: Path, name: str, config: AmexRetrievalConfig):
     moveToPath = config.yearsDir / f"{name}.xlsx"

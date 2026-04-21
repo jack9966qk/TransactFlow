@@ -1,13 +1,16 @@
+import csv
 from collections import defaultdict
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Callable, Dict, List, Optional, Tuple
+
+from dateutil.parser import parse as parseDate
+
 from ..base import *
 from ..multiCurrency import MultiCurrencyAmount
 from ..process import Process, funcMatching, funcProcess, takeFirstMatch
 from ..processes.payslipAnnotationItem import PayslipAnnotationItem
-import csv
-from dateutil.parser import parse as parseDate
+
 
 @dataclass
 class PayslipAnnotationItemParserState:

@@ -1,8 +1,11 @@
+from typing import List
+
+from dateutil.parser import parse as parseDate
+
 from ..base import *
 from ..process import *
 from .importer import CsvImporter
-from dateutil.parser import parse as parseDate
-from typing import List
+
 
 def readManualRecordCsv(filename: str) -> List[Transaction]:
     def parseLine(row, raw, lineNum) -> Transaction:

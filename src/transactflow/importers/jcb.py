@@ -1,12 +1,27 @@
-from calendar import c
-from dataclasses import dataclass
 import os
-from ..base import AMEX_JP, EXPECTED_INTERNAL_TRANSFER, JCB_CREDIT_CARD, EXPENSE, INCOME, JPY, SMBC_CREDIT_CARD, SOURCE_CUTOFF, MoneyAmount, Transaction, Date, sumSingleCurrencyAmounts, syntheticTransaction
-from ..retrieval.common import forEachFileToReadFrom
-from .importer import CsvImporter, RepaymentContext, addingCutoffTransactionTo, readDateOfTimestampFile
-from typing import List, Optional, TextIO, cast, Tuple
-from datetime import timedelta
 import re
+from datetime import timedelta
+from typing import List, Optional, TextIO, cast
+
+from ..base import (
+    EXPECTED_INTERNAL_TRANSFER,
+    EXPENSE,
+    INCOME,
+    JCB_CREDIT_CARD,
+    JPY,
+    Date,
+    MoneyAmount,
+    Transaction,
+    sumSingleCurrencyAmounts,
+    syntheticTransaction,
+)
+from ..retrieval.common import forEachFileToReadFrom
+from .importer import (
+    CsvImporter,
+    RepaymentContext,
+    addingCutoffTransactionTo,
+    readDateOfTimestampFile,
+)
 
 JCB_EXPECTED_AUTOMATIC_REPAYMENT_DESCRIPTION = "Synthetic expected repayment for JCB"
 JCB_EXPECTED_MANUAL_REPAYMENT_DESCRIPTION = "Synthetic expected manual repayment for JCB"

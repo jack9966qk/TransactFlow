@@ -1,11 +1,20 @@
+import os
+import pickle
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 from typing import Optional, cast
-import pickle
-import os
+
 import yfinance
-from .base import Date, Currency, JPY, USD, CNY, StockUnit
-from .base import memo  # type: ignore
+
+from .base import (
+    CNY,
+    JPY,
+    USD,
+    Currency,
+    Date,
+    StockUnit,  # type: ignore
+)
+
 
 @dataclass(frozen=True)
 class RetrivedRates:

@@ -1,11 +1,15 @@
-from os import read
-from typing import Callable, Dict, List, Optional, Tuple
-from transactflow.base import *
 from dataclasses import dataclass, field, replace
-from transactflow.multiCurrency import totalAdjustedAmountAsJPY
-from transactflow.taxCalculation.nationalTaxCalculation import NationalTaxCalculator, DependentsConfig
+from typing import Callable, Dict, List, Optional, Tuple
+
 import transactflow.taxCalculation.localTaxCalculation as localTaxCalculation
+from transactflow.base import *
+from transactflow.multiCurrency import totalAdjustedAmountAsJPY
+from transactflow.taxCalculation.nationalTaxCalculation import (
+    DependentsConfig,
+    NationalTaxCalculator,
+)
 from transactflow.userConfig import UserConfig
+
 
 @dataclass()
 class TaxEstimationInfo:
@@ -150,7 +154,6 @@ class TaxSummary:
             before: TaxSummary,
             removeSaving: Callable[[TaxSummary], TaxSummary]
         ) -> Tuple[TaxSummary, AmountsByTaxType]:
-            import rich
             # print("before:")
             # rich.print(before)
             after = removeSaving(before)

@@ -4,14 +4,16 @@ import os
 from datetime import date
 
 from transactflow.base import (
-    EXPENSE, INCOME, SALARY, SMBC_PRESTIA, REVOLUT,
-    JPY, MoneyAmount, Transaction, sortedByDate,
-    GENERAL_EXPENSE_DESTINATION,
+    EXPENSE,
+    JPY,
+    REVOLUT,
+    SMBC_PRESTIA,
+    MoneyAmount,
 )
-from transactflow.process import GroupedProcess
-from transactflow.processes.importer import ImporterProcess
 from transactflow.importers.prestia import readPrestiaCsv
 from transactflow.importers.revolut import readRevolutCsv
+from transactflow.process import GroupedProcess
+from transactflow.processes.importer import ImporterProcess
 
 TESTS_DIR = os.path.dirname(os.path.abspath(__file__))
 TEST_DATA_DIR = os.path.join(TESTS_DIR, "data")

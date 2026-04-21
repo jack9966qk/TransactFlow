@@ -2,8 +2,10 @@ import os
 from collections import namedtuple
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Callable, Optional, TextIO
+from typing import Callable, Optional
+
 from tzlocal import get_localzone
+
 
 def writeLocalTimeString(filePath: Path, time: Optional[datetime] = None):
     with open(filePath, "w") as f:

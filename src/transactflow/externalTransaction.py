@@ -3,8 +3,13 @@
 from typing import Optional, Tuple
 
 from .base import (
-    Account, Category, Currency, Date, ExchangeRates, MoneyAmount,
-    Transaction, EMPTY_EXCHANGE_RATES,
+    Account,
+    Category,
+    Currency,
+    Date,
+    ExchangeRates,
+    MoneyAmount,
+    Transaction,
 )
 from .proto_gen import transactflow_pb2 as pb
 

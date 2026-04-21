@@ -38,7 +38,6 @@ from .multiCurrency import amountInJPY, embeddedOrNearestRatesFor
 from .serialization import categoryForLabel
 from .userConfig import UserConfig
 
-
 packageDir = Path(__file__).parent
 templateDir = str(packageDir / "templates")
 webDir = packageDir / "web"
