@@ -1,12 +1,12 @@
 from dataclasses import dataclass
-from typing import Optional, Tuple
+from typing import Optional
 
 from ..base import Date
 
 
 @dataclass(frozen=True)
 class PayslipAnnotationItem:
-    sourceLocation: Optional[Tuple[str, int]]
+    sourceLocation: Optional[tuple[str, int]]
     date: Date
     type: str
     gross: float

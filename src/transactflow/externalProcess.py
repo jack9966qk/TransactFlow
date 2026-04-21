@@ -1,7 +1,7 @@
 """Conversions between native Matching/Mapping/Process types and their protobuf
 ExternalMatching/ExternalMapping/ExternalProcess counterparts."""
 
-from typing import Dict, List, Optional
+from typing import Optional
 
 from .base import Account, Category, Date
 from .externalTransaction import _categoryFromProto, _categoryToProto
@@ -35,18 +35,18 @@ from .proto_gen import transactflow_pb2 as pb
 # ---------------------------------------------------------------------------
 
 # Matching name -> instance.  Populated at module level; callers may extend.
-_NAMED_MATCHINGS: Dict[str, Matching] = {}
+_NAMED_MATCHINGS: dict[str, Matching] = {}
 
 # Process name -> instance.
-_NAMED_PROCESSES: Dict[str, Process] = {}
+_NAMED_PROCESSES: dict[str, Process] = {}
 
 # Mapping name -> instance.
-_NAMED_MAPPINGS: Dict[str, Mapping] = {}
+_NAMED_MAPPINGS: dict[str, Mapping] = {}
 
 # Reverse lookups (id -> name) built lazily.
-_MATCHING_ID_TO_NAME: Dict[int, str] = {}
-_PROCESS_ID_TO_NAME: Dict[int, str] = {}
-_MAPPING_ID_TO_NAME: Dict[int, str] = {}
+_MATCHING_ID_TO_NAME: dict[int, str] = {}
+_PROCESS_ID_TO_NAME: dict[int, str] = {}
+_MAPPING_ID_TO_NAME: dict[int, str] = {}
 
 
 def _rebuildReverseLookups() -> None:
@@ -144,7 +144,7 @@ def _matchingParamsToProto(m: LabelledFunctionalMatching) -> Optional[pb.Matchin
     # "key=value" pairs. We parse greedily.
     parts = label.split(", ")
     # Rejoin parts that don't contain "=" with the previous part (value contained a comma).
-    merged: List[str] = []
+    merged: list[str] = []
     for part in parts:
         if "=" in part and (not merged or "=" in merged[-1]):
             merged.append(part)
@@ -209,12 +209,12 @@ def _matchingParamsToProto(m: LabelledFunctionalMatching) -> Optional[pb.Matchin
     return pb.MatchingParams(**kwargs)
 
 
-def _parseStrList(s: str) -> List[str]:
+def _parseStrList(s: str) -> list[str]:
     """Parse a Python repr of a string list, e.g. \"['a', 'b']\"."""
     s = s.strip()
     if s.startswith("[") and s.endswith("]"):
         s = s[1:-1]
-    items: List[str] = []
+    items: list[str] = []
     for item in s.split(","):
         item = item.strip().strip("'\"")
         if item:
@@ -270,7 +270,7 @@ def matchingToProto(m: Matching) -> pb.ExternalMatching:
 
 
 def matchingToProtoComposite(
-    m: Matching, *, subMatchings: Optional[List[Matching]] = None
+    m: Matching, *, subMatchings: Optional[list[Matching]] = None
 ) -> pb.ExternalMatching:
     """Convert a composite matching (satisfyAll/satisfyAny) when sub-matchings
     are known by the caller."""

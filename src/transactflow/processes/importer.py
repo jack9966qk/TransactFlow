@@ -1,4 +1,4 @@
-from typing import Callable, List, Optional
+from typing import Callable, Optional
 
 from ..base import *
 from ..importers.amazonGiftCard import annotateAmazonGiftCardTransactions
@@ -26,28 +26,28 @@ class ImporterProcess(Process):
     """
 
     account: Optional[Account]
-    readFromSource: Callable[[], List[Transaction]]
+    readFromSource: Callable[[], list[Transaction]]
 
     def __init__(
         self,
         label: str,
         account: Optional[Account],
-        readFromSource: Callable[[], List[Transaction]],
+        readFromSource: Callable[[], list[Transaction]],
     ):
         super().__init__(label)
         self.account = account
         self.readFromSource = readFromSource
 
-    def __call__(self, transactions: List[Transaction]) -> List[Transaction]:
+    def __call__(self, transactions: list[Transaction]) -> list[Transaction]:
         newTs = self.readFromSource()
         if self.account is not None:
             newTs = labelIfMatch(EVERYTHING, account=self.account)(newTs)
         return sortedByDate(transactions + newTs)
 
 
-def _buildImporterProcesses(config: ImporterConfig) -> List[Process]:
+def _buildImporterProcesses(config: ImporterConfig) -> list[Process]:
 
-    processes: List[Process] = []
+    processes: list[Process] = []
 
     if (prestia := config.prestia) is not None:
         processes.append(ImporterProcess(

@@ -1,4 +1,4 @@
-from typing import List, Optional
+from typing import Optional
 
 from dateutil.parser import parse as parseDate
 
@@ -6,7 +6,7 @@ from ..base import EXPENSE, INCOME, JPY, SMBC_PRESTIA, MoneyAmount, Transaction
 from .importer import CsvImporter, addingCutoffTransactionTo, readDateOfTimestampFile
 
 
-def readPrestiaCsv(filename: str, timestampPath: str) -> List[Transaction]:
+def readPrestiaCsv(filename: str, timestampPath: str) -> list[Transaction]:
     def readNumOfLines() -> int:
         counter = 0
         with open(filename, "r", encoding="shift_jis") as f:
@@ -18,7 +18,7 @@ def readPrestiaCsv(filename: str, timestampPath: str) -> List[Transaction]:
         if line[0] == "#": return False
         return True
 
-    def parsePrestiaLine(row: List[str], raw: str, lineNum: int) -> Optional[Transaction]:
+    def parsePrestiaLine(row: list[str], raw: str, lineNum: int) -> Optional[Transaction]:
         if not isValidPrestiaTransaction(raw): return None
         da, de, am, _ = row
         amount = float(am.rstrip(" JPY").replace(",", ""))

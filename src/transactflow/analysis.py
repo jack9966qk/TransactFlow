@@ -5,15 +5,9 @@ from datetime import timedelta
 from enum import Enum
 from typing import (
     Callable,
-    DefaultDict,
-    Dict,
     Generator,
     Iterable,
-    List,
     Optional,
-    Set,
-    Tuple,
-    Union,
     cast,
 )
 
@@ -118,7 +112,7 @@ class CurrencyConversionMode(Enum):
 
 @dataclass
 class TransactionSetStats:
-    transactions: List[Transaction]
+    transactions: list[Transaction]
     currencyConversionMode: CurrencyConversionMode = CurrencyConversionMode.USE_RATES_NEAREST_TRANSACTION
 
     def totalAdjustedAmountAsJPYFor(self, transactions: Iterable[Transaction]) -> float:
@@ -179,8 +173,8 @@ class TransactionSetStats:
     def totalExpense(self) -> MultiCurrencyAmount:
         return sumCurrencyAmounts(abs(t.adjustedAmount) for t in expensesOf(self.transactions))
 
-    def categorizedTotalsAsJPY(self, absVals: bool = False) -> Dict[AnnotatedCategory, float]:
-        transSets: Dict[AnnotatedCategory, Set[Transaction]] = defaultdict(set)
+    def categorizedTotalsAsJPY(self, absVals: bool = False) -> dict[AnnotatedCategory, float]:
+        transSets: dict[AnnotatedCategory, set[Transaction]] = defaultdict(set)
         for t in self.transactions:
             key = AnnotatedCategory(category=t.category, isForecast=t.isForecast)
             transSets[key].add(t)
@@ -192,7 +186,7 @@ class TransactionSetStats:
 
     @dataclass
     class ExpenseSummary:
-        amountsByCategory: Dict[AnnotatedCategory, float]
+        amountsByCategory: dict[AnnotatedCategory, float]
         totalAmount: float
 
     def expenseSummary(self, includeRemaining: bool) -> ExpenseSummary:
@@ -206,10 +200,10 @@ class TransactionSetStats:
         totalAmount = sum(totalByCats.values())
         return TransactionSetStats.ExpenseSummary(totalByCats, totalAmount)
 
-def reorderCategories(categories: List[Category],
-                      leading: List[Category] = [],
-                      trailing: List[Category] = [],
-                      exclude: List[Category] = []) -> List[Category]:
+def reorderCategories(categories: list[Category],
+                      leading: list[Category] = [],
+                      trailing: list[Category] = [],
+                      exclude: list[Category] = []) -> list[Category]:
     result = categories
     for cat in leading[::-1]:
         result = [cat] + [c for c in result if c != cat]
@@ -218,7 +212,7 @@ def reorderCategories(categories: List[Category],
     result = [c for c in result if c not in exclude]
     return result
 
-def transactionsOverview(label: str, transactions: List[Transaction]) -> str:
+def transactionsOverview(label: str, transactions: list[Transaction]) -> str:
     lines = []
     for currencyConversionMode in CurrencyConversionMode:
         lines.append(f"Conversion mode: {currencyConversionMode.value}")
@@ -248,12 +242,12 @@ brokers.
 """
 totalAccountBalance = totalRawAmount
 
-def accountBalanceByAccount(transactions: List[Transaction]) -> Dict[Account, MultiCurrencyAmount]:
-    transactionsByAccount: Dict[Account, List[Transaction]] = defaultdict(list)
+def accountBalanceByAccount(transactions: list[Transaction]) -> dict[Account, MultiCurrencyAmount]:
+    transactionsByAccount: dict[Account, list[Transaction]] = defaultdict(list)
     for t in transactions: transactionsByAccount[t.account].append(t)
     return { a: totalAccountBalance(ts) for a, ts in transactionsByAccount.items() }
 
-def netWorth(transactions: List[Transaction]) -> MultiCurrencyAmount:
+def netWorth(transactions: list[Transaction]) -> MultiCurrencyAmount:
     """
     Calculates the net worth of all available assets.
 
@@ -270,7 +264,7 @@ def netWorth(transactions: List[Transaction]) -> MultiCurrencyAmount:
         ])
     )
 
-def totalSaving(transactions: List[Transaction]) -> MultiCurrencyAmount:
+def totalSaving(transactions: list[Transaction]) -> MultiCurrencyAmount:
     """
     Calculates a subjectively defined savings amount.
 
@@ -290,7 +284,7 @@ def totalSaving(transactions: List[Transaction]) -> MultiCurrencyAmount:
 def categoryRespectingNetTotal(trans) -> float:
     return totalAdjustedAmountAsJPY([t for t in earnedIncomesOf(trans) + expensesOf(trans)])
 
-def netWorthReport(allTransactions: List[Transaction]) -> str:
+def netWorthReport(allTransactions: list[Transaction]) -> str:
     def generateLines() -> Generator[str, None, None]:
         totals = netWorth(allTransactions)
         totalJPY = totals.aggregatedUsingLatestRatesAs(JPY)
@@ -354,7 +348,7 @@ class SegmentedDisplayOption(Enum):
             return False
         assert(False)
 
-    def filterTransactions(self, ts: List[Transaction]) -> List[Transaction]:
+    def filterTransactions(self, ts: list[Transaction]) -> list[Transaction]:
         return [t for t in ts if self.includeTransaction(t)]
 
 @dataclass
@@ -386,7 +380,7 @@ class LabelSetAlias(Enum):
 
     def __str__(self): return self.value
 
-    def hasLabel(self, label: GroupLabel, group: List[Transaction]) -> bool:
+    def hasLabel(self, label: GroupLabel, group: list[Transaction]) -> bool:
         # TODO: match months/years in a more robust way
         if self == LabelSetAlias.MONTHS_2019:
             return len(label) == len("YYYY-MM-DD~") and label[:4] == "2019"
@@ -419,13 +413,13 @@ class LabelSetAlias(Enum):
             return len(label) == len("YYYY") and label.isnumeric()
         assert(False)
 
-GroupLabelOption = Union[GroupLabel, GroupLabelRange, LabelSetAlias]
+GroupLabelOption = GroupLabel | GroupLabelRange | LabelSetAlias
 
 def filterLabelsThatMatchOption(
-    labels: List[GroupLabel],
-    labelsToGroups: Dict[GroupLabel, List[Transaction]],
+    labels: list[GroupLabel],
+    labelsToGroups: dict[GroupLabel, list[Transaction]],
     option: Optional[GroupLabelOption]
-) -> List[GroupLabel]:
+) -> list[GroupLabel]:
     match option:
         case None: return labels
         case groupLabelOption if type(groupLabelOption) == GroupLabel:
@@ -460,9 +454,9 @@ class AnalysisProviderFilter:
 
     def matchingTransactionsInGroups(
         self,
-        labels: List[GroupLabel],
-        labelsToGroups: Dict[GroupLabel, List[Transaction]]
-    ) -> "OrderedDict[GroupLabel, List[Transaction]]":
+        labels: list[GroupLabel],
+        labelsToGroups: dict[GroupLabel, list[Transaction]]
+    ) -> "OrderedDict[GroupLabel, list[Transaction]]":
         result = OrderedDict()
         includedLabels = filterLabelsThatMatchOption(labels, labelsToGroups, self.labelOption)
         def quantityForFiltering(t: Transaction):
@@ -497,9 +491,9 @@ class AnalysisProviderFilter:
         return result
 
     def matchingTransactions(self,
-                             labels: List[GroupLabel],
-                             labelsToGroups: Dict[GroupLabel, List[Transaction]]
-                             ) -> List[Transaction]:
+                             labels: list[GroupLabel],
+                             labelsToGroups: dict[GroupLabel, list[Transaction]]
+                             ) -> list[Transaction]:
         transactionsInGroups = self.matchingTransactionsInGroups(labels, labelsToGroups)
         merged = []
         for group in transactionsInGroups.values():
@@ -527,29 +521,29 @@ class AnalysisProviderOptions:
 
 @dataclass
 class BarChartData:
-    labels: List[GroupLabel]
-    incomeTotalsByCat: List[Dict[AnnotatedCategory, float]]
-    expenseTotalsByCat: List[Dict[AnnotatedCategory, float]]
-    orderedCategories: List[AnnotatedCategory]
+    labels: list[GroupLabel]
+    incomeTotalsByCat: list[dict[AnnotatedCategory, float]]
+    expenseTotalsByCat: list[dict[AnnotatedCategory, float]]
+    orderedCategories: list[AnnotatedCategory]
 
     @property
-    def orderedIncomeCats(self) -> List[AnnotatedCategory]:
+    def orderedIncomeCats(self) -> list[AnnotatedCategory]:
         return [ c for c in self.orderedCategories
                  if any(c in d for d in self.incomeTotalsByCat) ]
     @property
-    def orderedExpenseCats(self) -> List[AnnotatedCategory]:
+    def orderedExpenseCats(self) -> list[AnnotatedCategory]:
         return [ c for c in self.orderedCategories
                  if any(c in d for d in self.expenseTotalsByCat) ]
 
     def withCategoryTransformed(self, categorizeOption: CategorizeOption) -> "BarChartData":
-        def mapKeysMergingValues(catToVals: Dict[AnnotatedCategory, float]):
-            merged: Dict[AnnotatedCategory, float] = DefaultDict(float)
+        def mapKeysMergingValues(catToVals: dict[AnnotatedCategory, float]):
+            merged: dict[AnnotatedCategory, float] = defaultdict(float)
             for c in catToVals:
                 merged[categorizeOption.transformAnnotatedCategory(c)] += catToVals[c]
             return merged
         def transformedTotals(
-            totals: List[Dict[AnnotatedCategory, float]]
-        ) -> List[Dict[AnnotatedCategory, float]]:
+            totals: list[dict[AnnotatedCategory, float]]
+        ) -> list[dict[AnnotatedCategory, float]]:
             return [mapKeysMergingValues(d) for d in totals]
         return BarChartData(
             labels=self.labels,
@@ -560,21 +554,21 @@ class BarChartData:
 
 @dataclass
 class PieChartData:
-    labels: List[GroupLabel]
-    categoryToAmount: Dict[AnnotatedCategory, float]
-    orderedCategories: List[AnnotatedCategory]
-    otherCategoryToAmount: Optional[List[Tuple[AnnotatedCategory, float]]] = None
+    labels: list[GroupLabel]
+    categoryToAmount: dict[AnnotatedCategory, float]
+    orderedCategories: list[AnnotatedCategory]
+    otherCategoryToAmount: Optional[list[tuple[AnnotatedCategory, float]]] = None
     isGroupAverage: bool = False
 
     @property
-    def orderedCategoryToAmountPairs(self) -> List[Tuple[AnnotatedCategory, float]]:
+    def orderedCategoryToAmountPairs(self) -> list[tuple[AnnotatedCategory, float]]:
         orderIndex = { c: i for i, c in enumerate(self.orderedCategories) }
         return sorted(
             self.categoryToAmount.items(),
             key=lambda p: orderIndex.get(p[0], len(orderIndex)))
 
     @property
-    def orderedOtherCategoryToAmount(self) -> Optional[List[Tuple[AnnotatedCategory, float]]]:
+    def orderedOtherCategoryToAmount(self) -> Optional[list[tuple[AnnotatedCategory, float]]]:
         if self.otherCategoryToAmount is None: return None
         orderIndex = { c: i for i, c in enumerate(self.orderedCategories) }
         return sorted(
@@ -601,12 +595,12 @@ class PieChartData:
         return "\n".join(generateLines())
 
     def withCategoryTransformed(self, categorizeOption: CategorizeOption) -> "PieChartData":
-        newCategoryToAmount: Dict[AnnotatedCategory, float] = {}
+        newCategoryToAmount: dict[AnnotatedCategory, float] = {}
         for cat, am in self.categoryToAmount.items():
             newCat = categorizeOption.transformAnnotatedCategory(cat)
             newCategoryToAmount[newCat] = newCategoryToAmount.get(newCat, 0.0) + am
-        seen: Set[AnnotatedCategory] = set()
-        newOrderedCategories: List[AnnotatedCategory] = []
+        seen: set[AnnotatedCategory] = set()
+        newOrderedCategories: list[AnnotatedCategory] = []
         for c in self.orderedCategories:
             transformed = categorizeOption.transformAnnotatedCategory(c)
             if transformed in seen: continue
@@ -632,7 +626,7 @@ class PieChartData:
                 (AnnotatedCategory(OTHER, isForecast=False), nonForecastedAmount),
                 (AnnotatedCategory(OTHER, isForecast=True), forecastedAmount),
             ]
-        newCategoryToAmount: Dict[AnnotatedCategory, float] = {c: am for c, am in resultPairs}
+        newCategoryToAmount: dict[AnnotatedCategory, float] = {c: am for c, am in resultPairs}
         otherCategoryToAmount = sorted(minorPairs, key=lambda p: abs(p[1]), reverse=True)
         return replace(
             self, categoryToAmount=newCategoryToAmount, otherCategoryToAmount=otherCategoryToAmount)
@@ -665,8 +659,8 @@ class DeductIncomeOption(Enum):
         "Deduct payslip items, all (paid & unpaid) tax and rent"
 
     @property
-    def targetIncomeCategoryFromExpenseAncestor(self) -> Dict[Category, Category]:
-        DictToReturn = Dict[Category, Category]
+    def targetIncomeCategoryFromExpenseAncestor(self) -> dict[Category, Category]:
+        DictToReturn = dict[Category, Category]
         def mergeDicts(d1: DictToReturn, d2: DictToReturn) -> DictToReturn: # type: ignore
             result = { k: v for k, v in d1.items() }
             for k, v in d2.items(): result[k] = v
@@ -713,20 +707,20 @@ class DeductIncomeOption(Enum):
         assert(False)
 
     @property
-    def categoriesToDeductGroupedByTargets(self) -> Dict[Category, Set[Category]]:
+    def categoriesToDeductGroupedByTargets(self) -> dict[Category, set[Category]]:
         ancestorsToTargets = self.targetIncomeCategoryFromExpenseAncestor
         result = {}
         for cat, target in ancestorsToTargets.items():
             result[target] = result.get(target, set()) | { cat }
         return result
 
-    def deductOps(self, expenseTotals: Dict[Category, float]) -> Dict[Category, Tuple[Set[Category], float]]:
+    def deductOps(self, expenseTotals: dict[Category, float]) -> dict[Category, tuple[set[Category], float]]:
         targetsFromAncestors = self.targetIncomeCategoryFromExpenseAncestor
         def ancestorFor(cat: Category) -> Optional[Category]:
             for ancestor in targetsFromAncestors.keys():
                 if cat.isUnder(ancestor): return ancestor
             return None
-        ops: Dict[Category, Tuple[Set[Category], float]] = {}
+        ops: dict[Category, tuple[set[Category], float]] = {}
         for cat in expenseTotals.keys():
             ancestor = ancestorFor(cat)
             if ancestor is None: continue
@@ -737,8 +731,8 @@ class DeductIncomeOption(Enum):
 
     def applyDeductionForBarChart(self, barChartData: BarChartData):
         def applyToTotals(
-            incomeTotals: Dict[AnnotatedCategory, float],
-            expenseTotals: Dict[AnnotatedCategory, float]
+            incomeTotals: dict[AnnotatedCategory, float],
+            expenseTotals: dict[AnnotatedCategory, float]
         ):
             def makeDeductOps(isForecast: bool):
                 exps = {
@@ -800,12 +794,12 @@ class DeductIncomeOption(Enum):
 
 @dataclass
 class AnalysisProvider:
-    labelsToGroups: Dict[GroupLabel, List[Transaction]]
-    labels: List[GroupLabel]
-    categories: List[AnnotatedCategory]
+    labelsToGroups: dict[GroupLabel, list[Transaction]]
+    labels: list[GroupLabel]
+    categories: list[AnnotatedCategory]
     rates: RetrivedRates
 
-    def __init__(self, transactions: List[Transaction], config: UserConfig):
+    def __init__(self, transactions: list[Transaction], config: UserConfig):
         salarySectionedGroups, _ = splitIntoTimeSectionsBySalaryIncome(transactions)
         if len(salarySectionedGroups) > 0:
             lastSalarySection = salarySectionedGroups.pop()
@@ -827,7 +821,7 @@ class AnalysisProvider:
         self.labelsToGroups["All"] = transactions
         for year in years:
             self.labelsToGroups[str(year)] = [t for t in transactions if t.date.year == year]
-        allCategories = ORDERED_BASE_CATEGORIES + cast(List[Category], ORDERED_PSEUDO_CATEGORIES)
+        allCategories = ORDERED_BASE_CATEGORIES + cast(list[Category], ORDERED_PSEUDO_CATEGORIES)
         reorderedCategories = reorderCategories(
             list(allCategories),
             leading=[RENT, TAX, SOCIAL_SECURITY, MAJOR_SHOPPING,
@@ -846,7 +840,7 @@ class AnalysisProvider:
             stockUnits = frozenset(c for c in currencies if isinstance(c, StockUnit))
         self.rates = getOrRetrieveLatestRates(stockUnits)
 
-    def matchingTransactions(self, options: AnalysisProviderOptions) -> List[Transaction]:
+    def matchingTransactions(self, options: AnalysisProviderOptions) -> list[Transaction]:
         return options.filter.matchingTransactions(self.labels, self.labelsToGroups)
 
     def groupedMatchingTransactions(self, options: AnalysisProviderOptions):
@@ -869,7 +863,7 @@ class AnalysisProvider:
         matchedInGroups = options.filter.matchingTransactionsInGroups(self.labels, self.labelsToGroups)
         includedLabels = list(matchedInGroups.keys())
         groups = [matchedInGroups[l] for l in includedLabels]
-        def totalsOf(groups: List[List[Transaction]], isExpense: bool):
+        def totalsOf(groups: list[list[Transaction]], isExpense: bool):
             filterFn = expensesOf if isExpense else earnedIncomesOf
             filteredGroups = [filterFn(g) for g in groups]
             stats = [TransactionSetStats(g) for g in filteredGroups]
@@ -904,7 +898,7 @@ class AnalysisProvider:
 
     def dataForShopDistribution(self,
                                 options: AnalysisProviderOptions,
-                                deductIncomeOption: DeductIncomeOption) -> List[Tuple[str, float]]:
+                                deductIncomeOption: DeductIncomeOption) -> list[tuple[str, float]]:
         selectedTrans = self.matchingTransactions(options)
         selectedTrans = [t for t in selectedTrans if t.category.isUnder(EXPENSE)]
         selectedTrans = [t for t in selectedTrans if "口座振替" not in t.description]

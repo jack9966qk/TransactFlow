@@ -3,7 +3,7 @@ import itertools
 import re
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Callable, Dict, Iterator, List, Optional, TextIO, Tuple
+from typing import Callable, Iterator, Optional, TextIO
 
 from dateutil.parser import parse as parseDate
 from lxml import etree as ET  # type: ignore[import-untyped]
@@ -27,7 +27,7 @@ def readDateOfTimestampFile(path: str) -> Date:
     with open(path, "r") as f:
         return parseDate(f.read()).date()
 
-def addingCutoffTransactionTo(transactions: List[Transaction], date: Date, account: Account):
+def addingCutoffTransactionTo(transactions: list[Transaction], date: Date, account: Account):
     return sortByDateAndMore(transactions + [
         syntheticTransaction(
             date=date,
@@ -58,7 +58,7 @@ def wrapFile(file: TextIO, dropWhile: Optional[Callable[[str], bool]]) -> FileWr
 
 def readCsvWithRawAndLineNum(file: TextIO,
                              dropWhile: Optional[Callable[[str], bool]] = None,
-                             **kwargs) -> Iterator[Tuple[List[str], str, int]]:
+                             **kwargs) -> Iterator[tuple[list[str], str, int]]:
     wrapper = wrapFile(file, dropWhile)
     reader = csv.reader(wrapper, **kwargs)
     for idx, row in enumerate(reader):
@@ -67,7 +67,7 @@ def readCsvWithRawAndLineNum(file: TextIO,
 
 def readDictCsvWithRawAndLineNum(file: TextIO,
                                  dropWhile: Optional[Callable[[str], bool]] = None,
-                                 **kwargs) -> Iterator[Tuple[Dict[str, str], str, int]]:
+                                 **kwargs) -> Iterator[tuple[dict[str, str], str, int]]:
     wrapper = wrapFile(file, dropWhile)
     reader = csv.DictReader(wrapper, **kwargs)
     for idx, row in enumerate(reader):
@@ -76,13 +76,13 @@ def readDictCsvWithRawAndLineNum(file: TextIO,
 
 class CsvImporter:
     def __init__(self,
-                 transactionFromLine: Callable[[List[str], str, int], Optional[Transaction]],
+                 transactionFromLine: Callable[[list[str], str, int], Optional[Transaction]],
                  dropWhile: Optional[Callable[[str], bool]] = None,
                  **kwargs):
         self.transactionFromLine = transactionFromLine
         self.dropWhile = dropWhile
         self.readerArgs = kwargs
-    def parseFile(self, file: TextIO) -> List[Transaction]:
+    def parseFile(self, file: TextIO) -> list[Transaction]:
         reader = readCsvWithRawAndLineNum(file,
                                           dropWhile=self.dropWhile,
                                           **self.readerArgs)
@@ -91,13 +91,13 @@ class CsvImporter:
 
 class DictCsvImporter:
     def __init__(self,
-                 transactionFromLine: Callable[[Dict[str, str], str, int], Optional[Transaction]],
+                 transactionFromLine: Callable[[dict[str, str], str, int], Optional[Transaction]],
                  dropWhile: Optional[Callable[[str], bool]] = None,
                  **kwargs):
         self.transactionFromLine = transactionFromLine
         self.dropWhile = dropWhile
         self.readerArgs = kwargs
-    def parseFile(self, file: TextIO) -> List[Transaction]:
+    def parseFile(self, file: TextIO) -> list[Transaction]:
         reader = readDictCsvWithRawAndLineNum(file,
                                               dropWhile=self.dropWhile,
                                               **self.readerArgs)
@@ -113,7 +113,7 @@ class OfxImporter:
         self.account = account
         self.currency = currency
 
-    def parseFile(self, filePath: Path) -> List[Transaction]:
+    def parseFile(self, filePath: Path) -> list[Transaction]:
         content = filePath.read_text()
         idx = content.find("<OFX>")
         assert idx >= 0, "Could not find <OFX> element in OFX file"
@@ -141,7 +141,7 @@ class OfxImporter:
         stmtrs = stmtrsList[0]
 
         stmttrns = stmtrs.findall("BANKTRANLIST/STMTTRN")
-        stmttrnLineNums: List[int] = []
+        stmttrnLineNums: list[int] = []
         searchStart = 0
         for _ in stmttrns:
             pos = content.find("<STMTTRN>", searchStart)

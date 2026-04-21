@@ -1,5 +1,4 @@
 from dataclasses import dataclass, replace
-from typing import List
 
 from ..base import (
     AMAZON_GIFT_CARD,
@@ -21,13 +20,13 @@ class AmazonPayAnnotation:
 
 
 def annotateAmazonGiftCardTransactions(
-    transactions: List[Transaction],
+    transactions: list[Transaction],
     amazonGiftCardLastUpdateDate: Date,
-    amazonPayAnnotations: List[AmazonPayAnnotation],
+    amazonPayAnnotations: list[AmazonPayAnnotation],
     amazonPayAnnotationsLastUpdateDate: Date,
-) -> List[Transaction]:
+) -> list[Transaction]:
     remaining = [t for t in transactions]
-    annotated: List[Transaction] = []
+    annotated: list[Transaction] = []
     for annotation in amazonPayAnnotations:
 
         @funcMatching(f"Matching annotation: {annotation!r}")

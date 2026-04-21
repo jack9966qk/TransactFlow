@@ -1,4 +1,3 @@
-from typing import List
 
 from dateutil.parser import parse as parseDate
 
@@ -7,7 +6,7 @@ from ..process import *
 from .importer import CsvImporter
 
 
-def readManualRecordCsv(filename: str) -> List[Transaction]:
+def readManualRecordCsv(filename: str) -> list[Transaction]:
     def parseLine(row, raw, lineNum) -> Transaction:
         expenseAmount, categoryStr, description, time = row
         category = EXPENSE

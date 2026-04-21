@@ -7,7 +7,7 @@ import time
 from datetime import datetime
 from enum import Enum
 from pathlib import Path
-from typing import Awaitable, Callable, TypeVar, Union
+from typing import Awaitable, Callable, TypeVar
 
 import nodriver as uc
 from selenium import webdriver
@@ -53,7 +53,7 @@ def readCredential(dir: Path, fileName: str):
     return completedProcess.stdout.decode("utf-8")
 
 def findElementDeuggable(
-    browser: Union[RemoteWebDriver, WebElement], by: str, value: str,
+    browser: RemoteWebDriver | WebElement, by: str, value: str,
     timeout: float = 5.0,
 ) -> WebElement:
     valueToTry = value
@@ -131,7 +131,7 @@ def retryUntilNotNoneAndSatisfying(
     breakpoint()
     raise Exception()
 
-def findElementOrNone(browser: Union[RemoteWebDriver, WebElement], by=By.ID, value=None):
+def findElementOrNone(browser: RemoteWebDriver | WebElement, by=By.ID, value=None):
     try:
         element = browser.find_element(by, value)
         return element

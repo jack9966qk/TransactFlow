@@ -1,4 +1,4 @@
-from typing import Dict, List, Optional, TextIO, cast
+from typing import Optional, TextIO, cast
 
 from dateutil.parser import parse as parseDate
 
@@ -10,7 +10,7 @@ from .importer import (
 )
 
 
-def readSBINetBankCSV(filename: str, timestampPath: str) -> List[Transaction]:
+def readSBINetBankCSV(filename: str, timestampPath: str) -> list[Transaction]:
     def readNumOfLines() -> int:
         counter = 0
         with open(filename, "r", encoding="shift_jis") as f:
@@ -18,7 +18,7 @@ def readSBINetBankCSV(filename: str, timestampPath: str) -> List[Transaction]:
         return counter
     numLines = readNumOfLines()
 
-    def parseSBITransactionLine(row: Dict[str, str], raw: str, lineNum: int) -> Optional[Transaction]:
+    def parseSBITransactionLine(row: dict[str, str], raw: str, lineNum: int) -> Optional[Transaction]:
         def amountQuantity():
             if (expenseAmountString := row["出金金額(円)"]):
                 return -float(expenseAmountString.replace(",", ""))

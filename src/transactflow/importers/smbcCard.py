@@ -1,5 +1,5 @@
 import os
-from typing import List, Optional, TextIO, cast
+from typing import Optional, TextIO, cast
 
 from dateutil.parser import parse as parseDate
 
@@ -20,8 +20,8 @@ from ..retrieval.common import forEachFileToReadFrom
 from .importer import CsvImporter, addingCutoffTransactionTo, readDateOfTimestampFile
 
 
-def readSmbcCardCsvFiles(monthsDir: str, timestampPath: str) -> List[List[Transaction]]:
-    transactionGroups: List[List[Transaction]] = []
+def readSmbcCardCsvFiles(monthsDir: str, timestampPath: str) -> list[list[Transaction]]:
+    transactionGroups: list[list[Transaction]] = []
     readFromDir = monthsDir
     def addTransactionsToGroup(fileName: str, incomplete: bool):
         readFromPath = os.path.join(readFromDir, fileName)
@@ -41,8 +41,8 @@ def readSmbcCardCsvFiles(monthsDir: str, timestampPath: str) -> List[List[Transa
     )
     return transactionGroups
 
-def readSmbcCardCsv(filePath: str) -> List[Transaction]:
-    def parseSmbcCreditLine(row: List[str], raw, lineNum) -> Optional[Transaction]:
+def readSmbcCardCsv(filePath: str) -> list[Transaction]:
+    def parseSmbcCreditLine(row: list[str], raw, lineNum) -> Optional[Transaction]:
         match row:
             case []: return None
             case ["", "", "", "", "", total, last] if last == "" or "合計金額は" in last:

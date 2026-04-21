@@ -1,4 +1,4 @@
-from typing import Dict, List, Optional, TextIO, cast
+from typing import Optional, TextIO, cast
 
 from dateutil.parser import parse as parseDate
 
@@ -18,8 +18,8 @@ from .importer import (
 )
 
 
-def readRevolutCsv(filename: str, timestampPath: str) -> List[Transaction]:
-    def parseRevolutLine(row: Dict[str, str], raw: str, lineNum: int) -> Optional[Transaction]:
+def readRevolutCsv(filename: str, timestampPath: str) -> list[Transaction]:
+    def parseRevolutLine(row: dict[str, str], raw: str, lineNum: int) -> Optional[Transaction]:
         amount = float(row["Amount"])
         date = parseDate(row["Started Date"]).date()
         def category():

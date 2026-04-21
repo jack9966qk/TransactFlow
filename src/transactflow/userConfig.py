@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Callable, Dict, List, Optional, Tuple
+from typing import Callable, Optional
 
 from .base import Date, StockUnit, Transaction
 from .processes.payslipAnnotationItem import PayslipAnnotationItem
@@ -59,23 +59,23 @@ class MorganStanleyImportConfig:
     equityStatementPath: str
     equityUnvestedPath: str
     withdrawPath: str
-    usdJpyRateAtDate: Dict[Date, float]
+    usdJpyRateAtDate: dict[Date, float]
     csvHeaderNumUnits: str
     vestedParsingShouldIgnore: Callable[[dict, str, int], bool]
     unvestedParsingShouldIgnore: Callable[[dict, str, int], bool]
     withdrawParsingShouldIgnore: Callable[[dict, str, int], bool]
-    withdrawTransform: Callable[[int, float, float], Tuple[float, float, str]]
+    withdrawTransform: Callable[[int, float, float], tuple[float, float, str]]
 
 @dataclass(frozen=True)
 class AmazonGiftCardConfig:
-    transactions: List[Transaction]
+    transactions: list[Transaction]
     lastUpdateDate: Date
-    payAnnotations: List  # List[AmazonPayAnnotation] — avoid circular import
+    payAnnotations: list  # List[AmazonPayAnnotation] — avoid circular import
     payAnnotationsLastUpdateDate: Date
 
 @dataclass(frozen=True)
 class KyashConfig:
-    transactions: List[Transaction]
+    transactions: list[Transaction]
     lastUpdateDate: Date
 
 
@@ -124,7 +124,7 @@ class ProcessConfig:
     simpleProcess: Optional["Process"] = None
     complexProcess: Optional["Process"] = None
     taxProcess: Optional["Process"] = None
-    payslipAnnotations: Optional[List[PayslipAnnotationItem]] = None
+    payslipAnnotations: Optional[list[PayslipAnnotationItem]] = None
 
 
 # ---------------------------------------------------------------------------

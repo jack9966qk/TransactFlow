@@ -1,5 +1,5 @@
 import os
-from typing import List, Optional, TextIO, cast
+from typing import Optional, TextIO, cast
 
 from dateutil.parser import parse as parseDate
 
@@ -23,8 +23,8 @@ from .importer import (
 )
 
 
-def readDinersCsvFiles(monthsDir: str, timestampPath: str) -> List[List[Transaction]]:
-    transactionGroups: List[List[Transaction]] = []
+def readDinersCsvFiles(monthsDir: str, timestampPath: str) -> list[list[Transaction]]:
+    transactionGroups: list[list[Transaction]] = []
     readFromDir = monthsDir
     def addTransactionsToGroup(fileName: str, incomplete: bool):
         readFromPath = os.path.join(readFromDir, fileName)
@@ -45,11 +45,11 @@ def readDinersCsvFiles(monthsDir: str, timestampPath: str) -> List[List[Transact
     )
     return transactionGroups
 
-def readDinersCsv(filePath: str) -> List[Transaction]:
+def readDinersCsv(filePath: str) -> list[Transaction]:
     def parseAmount(text: str) -> MoneyAmount:
         return MoneyAmount(JPY, float(text.replace(",", "")))
     repaymentContext = RepaymentContext()
-    def parseDinersLine(row: List[str], raw: str, lineNum: int) -> Optional[Transaction]:
+    def parseDinersLine(row: list[str], raw: str, lineNum: int) -> Optional[Transaction]:
         match row:
             case ["\ufeff\"利用者\"", "利用年月日", "明細No", *_]: return None
             case ["", "", "", "当月の請求金額内訳", *_]: return None

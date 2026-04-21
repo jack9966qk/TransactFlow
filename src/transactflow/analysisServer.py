@@ -2,7 +2,7 @@ import shutil
 import subprocess
 import sys
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Optional
 
 from flask import Flask, jsonify, request, send_from_directory
 
@@ -102,7 +102,7 @@ def categoryColor(category: Category) -> str:
     return XKCD_TO_HEX.get(xkcd, DEFAULT_FALLBACK_COLOR)
 
 
-def annotatedCategoryToDict(ac: AnnotatedCategory) -> Dict[str, Any]:
+def annotatedCategoryToDict(ac: AnnotatedCategory) -> dict[str, Any]:
     return {
         "label": ac.label,
         "categoryLabel": ac.category.label,
@@ -119,7 +119,7 @@ def parseEnum(enumType, raw: Any, default):
     return enumType(raw)
 
 
-def parseOptions(body: Dict[str, Any]) -> AnalysisProviderOptions:
+def parseOptions(body: dict[str, Any]) -> AnalysisProviderOptions:
     def parseLabelOption(raw: Any) -> Optional[GroupLabelOption]:
         if raw is None:
             return None
@@ -140,7 +140,7 @@ def parseOptions(body: Dict[str, Any]) -> AnalysisProviderOptions:
             return raw
         raise ValueError(f"Unsupported labelOption: {raw!r}")
 
-    def parseFilter(raw: Optional[Dict[str, Any]]) -> AnalysisProviderFilter:
+    def parseFilter(raw: Optional[dict[str, Any]]) -> AnalysisProviderFilter:
         raw = raw or {}
         categoryFilterRaw = raw.get("categoryFilter")
         if categoryFilterRaw in (None, "", ANY_CATEGORY.label):
@@ -192,11 +192,11 @@ def index():
 
 @app.route("/api/meta")
 def meta():
-    def enumOptions(enumType) -> List[Dict[str, str]]:
+    def enumOptions(enumType) -> list[dict[str, str]]:
         return [{"name": e.name, "value": e.value} for e in enumType]
 
-    def categoryOptions() -> List[Dict[str, Any]]:
-        baseCats: List[Category] = [ANY_CATEGORY] + list(ORDERED_BASE_CATEGORIES)
+    def categoryOptions() -> list[dict[str, Any]]:
+        baseCats: list[Category] = [ANY_CATEGORY] + list(ORDERED_BASE_CATEGORIES)
         return [
             {
                 "label": c.label,
@@ -208,7 +208,7 @@ def meta():
             for c in baseCats
         ]
 
-    def categoryColorsMap() -> Dict[str, str]:
+    def categoryColorsMap() -> dict[str, str]:
         return {cat.label: categoryColor(cat) for cat in COLORS.keys()}
 
     p = requireProvider()
@@ -251,7 +251,7 @@ def overview():
 
 @app.route("/api/transactions", methods=["POST"])
 def transactions():
-    def moneyAmountToDict(amount: MoneyAmount) -> Dict[str, Any]:
+    def moneyAmountToDict(amount: MoneyAmount) -> dict[str, Any]:
         return {"currency": amount.currency.label, "quantity": amount.quantity}
 
     def transactionAmountJPY(t: Transaction) -> Optional[float]:
@@ -265,7 +265,7 @@ def transactions():
         except AssertionError:
             return None
 
-    def transactionToDict(t: Transaction) -> Dict[str, Any]:
+    def transactionToDict(t: Transaction) -> dict[str, Any]:
         adjustedJPY = transactionAmountJPY(t)
         colorCode = (
             colorCodeForJPYAmount(adjustedJPY) if adjustedJPY is not None else None
@@ -318,11 +318,11 @@ def transactions():
 
 @app.route("/api/barChartData", methods=["POST"])
 def barChartData():
-    def barChartResponse(data: BarChartData) -> Dict[str, Any]:
+    def barChartResponse(data: BarChartData) -> dict[str, Any]:
         def seriesFor(
-            cats: List[AnnotatedCategory],
-            totals: List[Dict[AnnotatedCategory, float]],
-        ) -> List[Dict[str, Any]]:
+            cats: list[AnnotatedCategory],
+            totals: list[dict[AnnotatedCategory, float]],
+        ) -> list[dict[str, Any]]:
             return [
                 {
                     "category": annotatedCategoryToDict(c),
@@ -351,7 +351,7 @@ def barChartData():
 
 @app.route("/api/pieChartData", methods=["POST"])
 def pieChartData():
-    def pieChartResponse(data: PieChartData) -> Dict[str, Any]:
+    def pieChartResponse(data: PieChartData) -> dict[str, Any]:
         orderedPairs = data.orderedCategoryToAmountPairs
         totalMagnitude = sum(abs(am) for _, am in orderedPairs) or 1.0
         entries = [
@@ -362,7 +362,7 @@ def pieChartData():
             }
             for c, am in orderedPairs
         ]
-        otherEntries: Optional[List[Dict[str, Any]]] = None
+        otherEntries: Optional[list[dict[str, Any]]] = None
         orderedOther = data.orderedOtherCategoryToAmount
         if orderedOther is not None:
             otherTotal = sum(abs(am) for _, am in orderedOther) or 1.0

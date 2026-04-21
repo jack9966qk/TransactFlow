@@ -1,4 +1,4 @@
-from typing import Generator, Iterator, List
+from typing import Generator, Iterator
 
 from ..base import *
 from ..base import StockUnit
@@ -8,7 +8,7 @@ from ..process import Process, funcProcess, sortByDateAndMore
 
 def addCaptialGainProcess(stockUnit: StockUnit) -> Process:
     @funcProcess()
-    def addCapitalGain(transactions: List[Transaction]) -> List[Transaction]:
+    def addCapitalGain(transactions: list[Transaction]) -> list[Transaction]:
         def genTransactions(iterator: Iterator[Transaction]) -> Generator[Transaction, None, None]:
             # There is a trade off between calculating this in USD and in JPY. Delta in USD is a
             # better match for reality, but Japan tax for capital gain is measured using JPY prices

@@ -1,5 +1,5 @@
 from datetime import timedelta
-from typing import Generator, List
+from typing import Generator
 
 from ..base import *
 from ..multiCurrency import totalAdjustedAmountAsJPY
@@ -12,7 +12,7 @@ def forecastMonthlyTransactions(
 ) -> Process:
     def estimatedAmountFromPast365Days(
         category: Category,
-        transactions: List[Transaction],
+        transactions: list[Transaction],
         untilDate: Date,
     ) -> MoneyAmount:
         fromDate = untilDate - timedelta(days=365)
@@ -24,7 +24,7 @@ def forecastMonthlyTransactions(
         return MoneyAmount(JPY, totalAdjustedAmountAsJPY(matchedTransactions)) / 12
 
     @funcProcess(f"forecastMonthlyTransactions for year {targetYear}")
-    def addMonthlyTransactions(transactions: List[Transaction]) -> List[Transaction]:
+    def addMonthlyTransactions(transactions: list[Transaction]) -> list[Transaction]:
         transactionsInYear = [t for t in transactions if t.date.year == targetYear]
         lastestSalaryMonth = max(t.date.month for t in transactionsInYear if t.category == SALARY)
         addForecastMonthRange = range(lastestSalaryMonth + 1, 13)
@@ -55,7 +55,7 @@ def forecastMonthlyTransactions(
                         account=PSEUDO_ACCOUNT,
                         isForecast=True)
         def generateSalaryRelatedTransactions() -> Generator[Transaction]:
-            salaryRelatedCategories: List[Category] = [
+            salaryRelatedCategories: list[Category] = [
                 SALARY,
                 NON_TAXABLE_SALARY_HOUSING_BENEFIT,
                 NATIONAL_TAX_WITHHOLDING_SALARY,

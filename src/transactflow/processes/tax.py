@@ -1,4 +1,4 @@
-from typing import Callable, List
+from typing import Callable
 
 from ..base import *
 from ..process import (
@@ -57,7 +57,7 @@ Here is what to do for each type of tax item:
 def reprojectUnpaidNationalTax(toYear: int, unpaidAmount: MoneyAmount) -> Process:
     assert(unpaidAmount.quantity >= 0)
     @funcProcess(customLabel=f"Reproject unpaid national tax to year {toYear}")
-    def reprojectProcess(transactions: List[Transaction]) -> List[Transaction]:
+    def reprojectProcess(transactions: list[Transaction]) -> list[Transaction]:
         # Assume that all unpaid national tax is for equity. This will eventually be (almost)
         # correct, since the total of national tax withholding + year end adjustment will be
         # nearly the same as "national tax amount for salary + bonus". Ignore the unvested part
@@ -92,7 +92,7 @@ def reprojectEstimatedTaxToBeCharged(toYear: int) -> Process:
         )
 
     @funcProcess(f"Reprojecting tax for {toYear} to be charged later")
-    def func(transactions: List[Transaction]) -> List[Transaction]:
+    def func(transactions: list[Transaction]) -> list[Transaction]:
         taxSummary = yearlyTaxSummaryFromTransactions(toYear,
                                                       estimateFullYear=True,
                                                       transactions=transactions)
@@ -155,7 +155,7 @@ def reprojectLocalTaxWithSegmentation(toYear: int,
     into the same 3 parts.
     """
     @funcProcess(f"Reproject local tax with segmentation to {toYear}")
-    def func(transactions: List[Transaction]) -> List[Transaction]:
+    def func(transactions: list[Transaction]) -> list[Transaction]:
         amountChargedSalary = lambda t: amountCharged(t) * determinedTotals.salaryOfAllRatio
         amountChargedBonus = lambda t: amountCharged(t) * determinedTotals.bonusOfAllRatio
         amountChargedEquity = lambda t: amountCharged(t) * determinedTotals.equityOfAllRatio
@@ -184,7 +184,7 @@ def reprojectLocalTaxWithSegmentation(toYear: int,
                     EQUITY_VESTING: redistributionConfigForEquity,
                 }
             )
-        def reprojectUnpaid() -> List[Process]:
+        def reprojectUnpaid() -> list[Process]:
             unpaidTotal = determinedTotals.forAll - sum(amountCharged(t) for t in transactions)
             # If total charged amount is more than the total amount given as the argument,
             # something must be wrong.
@@ -198,7 +198,7 @@ def reprojectLocalTaxWithSegmentation(toYear: int,
             assert(unpaidAmountEquity >= 0)
             def asAmount(quantity: float): return MoneyAmount(determinedTotals.currency, quantity)
             @funcProcess()
-            def addUnpaidAmountsForSalary(transactions: List[Transaction]) -> List[Transaction]:
+            def addUnpaidAmountsForSalary(transactions: list[Transaction]) -> list[Transaction]:
                 return addTaxAdjustments(transactions,
                                          totalAbsAmount=asAmount(unpaidAmountSalary),
                                          toYear=toYear,
@@ -207,7 +207,7 @@ def reprojectLocalTaxWithSegmentation(toYear: int,
                                          taxCategory=ESTIMATED_UNPAID_TAX_SALARY,
                                          taxAccount=PSEUDO_ACCOUNT)
             @funcProcess()
-            def addUnpaidAmountsForBonus(transactions: List[Transaction]) -> List[Transaction]:
+            def addUnpaidAmountsForBonus(transactions: list[Transaction]) -> list[Transaction]:
                 return addTaxAdjustments(transactions,
                                          totalAbsAmount=asAmount(unpaidAmountBonus),
                                          toYear=toYear,
@@ -216,7 +216,7 @@ def reprojectLocalTaxWithSegmentation(toYear: int,
                                          taxCategory=ESTIMATED_UNPAID_TAX_BONUS,
                                          taxAccount=PSEUDO_ACCOUNT)
             @funcProcess()
-            def addUnpaidAmountsForEquity(transactions: List[Transaction]) -> List[Transaction]:
+            def addUnpaidAmountsForEquity(transactions: list[Transaction]) -> list[Transaction]:
                 return addTaxAdjustments(transactions,
                                          totalAbsAmount=asAmount(unpaidAmountEquity),
                                          toYear=toYear,
@@ -262,7 +262,7 @@ def processesReprojectingTaxFinalized(
         savedTaxFromDependentTransferAbsAmountIn: Callable[[Transaction], float],
         savedTaxFromRentAbsAmountIn: Callable[[Transaction], float]):
     @funcProcess()
-    def pruneForecastedLocalTaxDeductions(transactions: List[Transaction]) -> List[Transaction]:
+    def pruneForecastedLocalTaxDeductions(transactions: list[Transaction]) -> list[Transaction]:
         # The reprojection process generates unpaid local tax transactions, which would overlap with
         # forecasted local tax deductions, therefore remove the forecasted versions which are likely
         # less accurate.

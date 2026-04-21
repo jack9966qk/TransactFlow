@@ -1,6 +1,5 @@
 import json
 from datetime import date
-from typing import Dict
 
 from .base import *
 
@@ -23,7 +22,7 @@ def CategoryKeysToLabels(dictionary):
         for k, v in dictionary.items()
     }
 
-def buildLabelToCategoryMap() -> Dict[str, Category]:
+def buildLabelToCategoryMap() -> dict[str, Category]:
     return { c.label: c for c in ORDERED_BASE_CATEGORIES }
 
 labelsToCategories = buildLabelToCategoryMap()

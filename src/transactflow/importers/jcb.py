@@ -1,7 +1,7 @@
 import os
 import re
 from datetime import timedelta
-from typing import List, Optional, TextIO, cast
+from typing import Optional, TextIO, cast
 
 from ..base import (
     EXPECTED_INTERNAL_TRANSFER,
@@ -26,8 +26,8 @@ from .importer import (
 JCB_EXPECTED_AUTOMATIC_REPAYMENT_DESCRIPTION = "Synthetic expected repayment for JCB"
 JCB_EXPECTED_MANUAL_REPAYMENT_DESCRIPTION = "Synthetic expected manual repayment for JCB"
 
-def readJcbCsvFiles(monthsDir: str, timestampPath: str) -> List[List[Transaction]]:
-    transactionGroups: List[List[Transaction]] = []
+def readJcbCsvFiles(monthsDir: str, timestampPath: str) -> list[list[Transaction]]:
+    transactionGroups: list[list[Transaction]] = []
     readFromDir = monthsDir
     def addTransactionsToGroup(fileName: str, incomplete: bool):
         readFromPath = os.path.join(readFromDir, fileName)
@@ -48,7 +48,7 @@ def readJcbCsvFiles(monthsDir: str, timestampPath: str) -> List[List[Transaction
     )
     return transactionGroups
 
-def readJcbCsv(filePath: str) -> List[Transaction]:
+def readJcbCsv(filePath: str) -> list[Transaction]:
     def parseJcbDate(text: str, repaymentContext: RepaymentContext) -> Date:
         """
         Parse date in the JCB CSV format.
@@ -81,7 +81,7 @@ def readJcbCsv(filePath: str) -> List[Transaction]:
         return MoneyAmount(JPY, quantity)
 
     repaymentContext = RepaymentContext()
-    def parseLine(row: List[str], raw: str, lineNum: int) -> Optional[Transaction]:
+    def parseLine(row: list[str], raw: str, lineNum: int) -> Optional[Transaction]:
         match row:
             case []: return None
             case [first, *_] if first.startswith("#"): return None
@@ -121,7 +121,7 @@ def readJcbCsv(filePath: str) -> List[Transaction]:
         transactions = importer.parseFile(cast(TextIO, f))
     assert((repaymentDate := repaymentContext.date) is not None)
     assert((repaymentAmount := repaymentContext.amount) is not None)
-    expectedRepayments: List[Transaction] = []
+    expectedRepayments: list[Transaction] = []
     calculatedTotalAmount = sumSingleCurrencyAmounts(t.adjustedAmount for t in transactions)
     netTotal = calculatedTotalAmount + repaymentAmount
     if netTotal.quantity != 0:

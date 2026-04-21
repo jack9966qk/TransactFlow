@@ -3,7 +3,7 @@ from collections import Counter
 from dataclasses import fields
 from itertools import zip_longest
 from pathlib import Path
-from typing import Callable, Generator, List, Optional
+from typing import Callable, Generator, Optional
 
 from transactflow.analysis import (
     accountBalanceByAccount,
@@ -59,7 +59,7 @@ def transactionRepr(t: Transaction, pretty: bool) -> str:
             lines.append(f"\t{field.name}: {resolvedValueRepr}")
     return "\n".join(lines)
 
-def transactionTestingStats(transactions: List[Transaction]) -> Generator[str, None, None]:
+def transactionTestingStats(transactions: list[Transaction]) -> Generator[str, None, None]:
     countByAccount = Counter(t.account for t in transactions)
     yield "countByAccount:"
     for account in sorted(countByAccount.keys()):
@@ -96,7 +96,7 @@ def transactionTestingStats(transactions: List[Transaction]) -> Generator[str, N
     yield ""
 
 def writeTransactionsWithStat(
-    transactions: List[Transaction],
+    transactions: list[Transaction],
     path: Path,
     transformString: Callable[[str], str],
     pretty: bool = False

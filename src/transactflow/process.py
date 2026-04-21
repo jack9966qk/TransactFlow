@@ -6,13 +6,10 @@ from dataclasses import dataclass
 from typing import (
     Any,
     Callable,
-    Dict,
     Generator,
     Iterable,
-    List,
     Literal,
     Optional,
-    Tuple,
 )
 
 from dateutil.parser import parse as parseDate
@@ -54,7 +51,7 @@ __all__ = [
 ]
 
 # ProcessFn :: [Transaction] -> [Transaction]
-ProcessFn = Callable[[List[Transaction]], List[Transaction]]
+ProcessFn = Callable[[list[Transaction]], list[Transaction]]
 # MatchingFn :: Transaction -> bool
 MatchFn = Callable[[Transaction], bool]
 # MapFn :: Transaction -> Transaction
@@ -81,7 +78,7 @@ def funcMatching(customLabel: Optional[str] = None) -> Callable[[MatchFn], Label
         return LabelledFunctionalMatching(matchingFn, label)
     return labelMatchingWithFuncName
 
-def argsDesc(args: Iterable[Tuple[str, Any]]) -> str:
+def argsDesc(args: Iterable[tuple[str, Any]]) -> str:
     return ", ".join([f"{arg}={val}" for arg, val in args if val is not None])
 
 def matching(
@@ -92,8 +89,8 @@ def matching(
     exactCategory: Optional[Category] = None,
     exactDesc: Optional[str] = None,
     descSubstr: Optional[str] = None,
-    anyDescSubStr: Optional[List[str]] = None,
-    anyDescRegex: Optional[List[str | re.Pattern[str]]] = None,
+    anyDescSubStr: Optional[list[str]] = None,
+    anyDescRegex: Optional[list[str | re.Pattern[str]]] = None,
     normalizeDesc: bool = False,
     descRegexIgnoreCase: bool = False,
     amountPosNegIs: Optional[Literal["pos"] | Literal["neg"]] =  None,
@@ -175,7 +172,7 @@ class Process(ABC):
     def __init__(self, label): self.label = label
     def __repr__(self): return f"<Process: {self.label}>"
     @abstractmethod
-    def __call__(self, transactions: List[Transaction]) -> List[Transaction]:
+    def __call__(self, transactions: list[Transaction]) -> list[Transaction]:
         pass
 
 class FunctionProcess(Process):
@@ -184,18 +181,18 @@ class FunctionProcess(Process):
         self.process: ProcessFn = process
     def __repr__(self):
         return f"FnProc: {self.label}"
-    def __call__(self, transactions: List[Transaction]) -> List[Transaction]:
+    def __call__(self, transactions: list[Transaction]) -> list[Transaction]:
         return self.process(transactions)
 
 class GroupedProcess(Process):
-    processes: List[Process]
+    processes: list[Process]
     atomic: bool
-    def __init__(self, label: Optional[str] = None, atomic: bool = False, processes: Optional[List[Process]] = None):
+    def __init__(self, label: Optional[str] = None, atomic: bool = False, processes: Optional[list[Process]] = None):
         label = "Anonymous grouped process" if label is None else label
         super().__init__(label)
         self.processes = [] if processes is None else processes
         self.atomic = atomic
-    def __call__(self, transactions: List[Transaction], progress = False) -> List[Transaction]:
+    def __call__(self, transactions: list[Transaction], progress = False) -> list[Transaction]:
         result = transactions
         flattenPaths = list(self.iterateDescedants(leafOnly=True, expandAtomic=self.atomic))
         shouldDisplayProgress = (not self.atomic and progress)
@@ -208,9 +205,9 @@ class GroupedProcess(Process):
         return result
     def iterateDescedants(
         self, leafOnly: bool, expandAtomic: bool
-    ) -> Generator[List[Process], None, None]:
+    ) -> Generator[list[Process], None, None]:
         visited: set[int] = set()
-        def iterateDescedantsRec(process: Process, pathUntilProc: List[Process]):
+        def iterateDescedantsRec(process: Process, pathUntilProc: list[Process]):
             def processToExpand():
                 if not isinstance(process, GroupedProcess): return None
                 if process.atomic and not expandAtomic: return None
@@ -239,7 +236,7 @@ class GroupedProcess(Process):
 
 def breakpointProcess(*args) -> Process:
     @funcProcess(f"Breakpoint")
-    def func(transactions: List[Transaction]) -> List[Transaction]:
+    def func(transactions: list[Transaction]) -> list[Transaction]:
         breakpoint()
         print(args)
         return transactions
@@ -261,7 +258,7 @@ def funcProcessWrapper(
         return FunctionProcess(processFn, label)
     return labelProcessWithFuncName
 
-ProcessListMaker = Callable[[], List[Process]]
+ProcessListMaker = Callable[[], list[Process]]
 def groupedProcessWrapper(
     customLabel: Optional[str] = None, atomic: bool = True
 ) -> Callable[[ProcessListMaker], GroupedProcess]:
@@ -273,7 +270,7 @@ def groupedProcessWrapper(
 
 def filterProc(matching: Matching) -> Process:
     @funcProcess(f"Filter with {matching.label}")
-    def func(transactions: List[Transaction]) -> List[Transaction]:
+    def func(transactions: list[Transaction]) -> list[Transaction]:
         return [t for t in transactions if matching(t)]
     return func
 
@@ -300,7 +297,7 @@ def funcMapping(customLabel: Optional[str] = None) -> Callable[[MapFn], Labelled
 
 def mapProc(mapping: Mapping) -> Process:
     @funcProcess(f"Map with {mapping.label}")
-    def func(transactions: List[Transaction]) -> List[Transaction]:
+    def func(transactions: list[Transaction]) -> list[Transaction]:
         return [mapping(t) for t in transactions]
     return func
 
@@ -310,7 +307,7 @@ def writeCatIf(matching: Matching, category: Category) -> Mapping:
         return t.replacingCategory(category) if matching(t) else t
     return func
 
-def satisfyAll(matchings: List[Matching]) -> Matching:
+def satisfyAll(matchings: list[Matching]) -> Matching:
     @funcMatching(f"Satisfy all of f{[m.label for m in matchings]}")
     def func(t: Transaction):
         for matching in matchings:
@@ -318,7 +315,7 @@ def satisfyAll(matchings: List[Matching]) -> Matching:
         return True
     return func
 
-def satisfyAny(matchings: List[Matching]) -> Matching:
+def satisfyAny(matchings: list[Matching]) -> Matching:
     @funcMatching(f"Satisfy any of f{[m.label for m in matchings]}")
     def func(t: Transaction):
         for matching in matchings:
@@ -335,7 +332,7 @@ def labelIfMatch(matching: Matching,
                  expected: Optional[int] = None) -> Process:
     label = f"labelIfMatch({argsDesc(locals().items())})"
     @funcProcess()
-    def checkMatchingExpectedNum(transactions: List[Transaction]) -> List[Transaction]:
+    def checkMatchingExpectedNum(transactions: list[Transaction]) -> list[Transaction]:
         numMatching = sum(1 for t in transactions if matching(t))
         passing = numMatching == expected if expected is not None else numMatching > 0
         if not passing: breakpoint()
@@ -390,10 +387,10 @@ def isMajorShopping(t: Transaction) -> bool:
 def relabelShoppingAsMajor(): return labelIfMatch(isMajorShopping, category=MAJOR_SHOPPING)
 
 def takeMatched(
-    transactions: List[Transaction], matching: Matching, limit: Optional[int] = None
-) -> Tuple[List[Transaction], List[Transaction]]:
-    matched: List[Transaction] = []
-    remaining: List[Transaction] = []
+    transactions: list[Transaction], matching: Matching, limit: Optional[int] = None
+) -> tuple[list[Transaction], list[Transaction]]:
+    matched: list[Transaction] = []
+    remaining: list[Transaction] = []
     for t in transactions:
         acceptMatching = False
         if limit is None: acceptMatching = True
@@ -403,7 +400,7 @@ def takeMatched(
         else: remaining.append(t)
     return matched, remaining
 
-def takeFirstMatch(trans: List[Transaction], matching: Matching):
+def takeFirstMatch(trans: list[Transaction], matching: Matching):
     matched, remaining = takeMatched(trans, matching, limit=1)
     match matched:
         case []: return None, remaining
@@ -412,8 +409,8 @@ def takeFirstMatch(trans: List[Transaction], matching: Matching):
 
 class ReplacementProcess(Process):
     def __init__(self, label: str,
-                 replaceFirstMatches: List[Matching],
-                 replaceFn: Callable[[List[Transaction]], List[Transaction]]):
+                 replaceFirstMatches: list[Matching],
+                 replaceFn: Callable[[list[Transaction]], list[Transaction]]):
         super().__init__(label)
         self.replaceFirstMatches = replaceFirstMatches
         self.replaceFn = replaceFn
@@ -431,7 +428,7 @@ class ReplacementProcess(Process):
         return processedTrans
 
 def splitTransactionFee(match: Matching, feeName, feeAbsAmount: MoneyAmount) -> Process:
-    def replaceFn(matches: List[Transaction]) -> List[Transaction]:
+    def replaceFn(matches: list[Transaction]) -> list[Transaction]:
         assert(len(matches) == 1)
         paymentTransaction = matches[0]
         assert(paymentTransaction.rawAmount.currency == feeAbsAmount.currency)
@@ -447,15 +444,15 @@ def splitTransactionFee(match: Matching, feeName, feeAbsAmount: MoneyAmount) -> 
     return ReplacementProcess(
         label="overwritten by parent", replaceFirstMatches=[match], replaceFn=replaceFn)
 
-def applyRefundOrReimbursement(expenseMatches: List[Matching],
+def applyRefundOrReimbursement(expenseMatches: list[Matching],
                                reimbursementMatch: Matching,
                                label=None) -> ReplacementProcess:
     # ReplacementProcess takes a list and does not tell between its items. In this case, the last
     # item is for the reimbursement, and the items before that are for the expenses.
     mergedMatchings = expenseMatches + [reimbursementMatch]
-    def splitMatches(matches: List[Transaction]): return matches[:-1], matches[-1]
+    def splitMatches(matches: list[Transaction]): return matches[:-1], matches[-1]
 
-    def replaceFn(matches: List[Transaction]) -> List[Transaction]:
+    def replaceFn(matches: list[Transaction]) -> list[Transaction]:
         expenses, reimbursement = splitMatches(matches)
         assert(reimbursement.category == REFUND_REIMBURSEMENT)
 
@@ -479,7 +476,7 @@ def applyRefundOrReimbursement(expenseMatches: List[Matching],
                else f"applyRefundOrReimbursement with matching: {reimbursementMatch.label}"),
         replaceFirstMatches=mergedMatchings, replaceFn=replaceFn)
 
-def labelAndApplyRefundOrReimbursement(expenseMatches: List[Matching],
+def labelAndApplyRefundOrReimbursement(expenseMatches: list[Matching],
                                        reimbursementMatch: Matching,
                                        label=None) -> Process:
     return GroupedProcess(atomic=True, processes=[
@@ -488,10 +485,10 @@ def labelAndApplyRefundOrReimbursement(expenseMatches: List[Matching],
     ])
 
 def monthlySyntheticTransactionsToAdd(
-    splitRatio: Dict[int, float],
+    splitRatio: dict[int, float],
     syntheticTranssactionForMonth: Callable[[int, MoneyAmount], Transaction],
     totalAmount: MoneyAmount
-) -> List[Transaction]:
+) -> list[Transaction]:
     """
     Split total amount to each month of the year, and generate synthetic transactions for each
     month if any amount. Amount can be positive or negative, splitRatio maps from month to a float
@@ -511,13 +508,13 @@ def monthlySyntheticTransactionsToAdd(
             yield synthetic
     return list(generateTransactions())
 
-def addTaxAdjustments(transactions: List[Transaction],
+def addTaxAdjustments(transactions: list[Transaction],
                       totalAbsAmount: MoneyAmount,
                       toYear: int,
                       weightUsingExactIncomeCat: Category,
                       taxDescription: str,
                       taxCategory: Category,
-                      taxAccount: Account) -> List[Transaction]:
+                      taxAccount: Account) -> list[Transaction]:
     """
     Split total tax amount into each month of the year by the ratio of taxable income total
     in each month. Then add these numbers as artificial expense items to each month. The tax
@@ -531,8 +528,8 @@ def addTaxAdjustments(transactions: List[Transaction],
                              if t.date.year == toYear and
                              t.category == weightUsingExactIncomeCat]
     totalWeightingAmount = totalAdjustedAmountAsJPY(weightingTransactions)
-    def transactionsToAdd(isForecast: bool) -> List[Transaction]:
-        transactionsByMonth: Dict[int, List[Transaction]] = defaultdict(list)
+    def transactionsToAdd(isForecast: bool) -> list[Transaction]:
+        transactionsByMonth: dict[int, list[Transaction]] = defaultdict(list)
         for t in weightingTransactions:
             if t.isForecast != isForecast: continue
             transactionsByMonth[t.date.month].append(t)
@@ -577,7 +574,7 @@ class TaxRedistributionConfig:
 def collectAndDistributeTax(
     toYear: int,
     label: str,
-    configForWeightingCategory: Dict[Category, TaxRedistributionConfig]
+    configForWeightingCategory: dict[Category, TaxRedistributionConfig]
 ) -> Process:
     """
     Sometimes tax for one year is charged in a single month, or even in a different year.
@@ -586,10 +583,10 @@ def collectAndDistributeTax(
     amount to the specified year.
     """
     @funcProcess(customLabel=label)
-    def func(transactions: List[Transaction]) -> List[Transaction]:
+    def func(transactions: list[Transaction]) -> list[Transaction]:
         def separateTaxFromTransaction(
             transaction: Transaction,
-        ) -> Tuple[Transaction, Dict[Category, MoneyAmount]]:
+        ) -> tuple[Transaction, dict[Category, MoneyAmount]]:
             def absTaxQuantityFor(config: TaxRedistributionConfig) -> float:
                 amount = config.getChargedTaxAbsAmount(transaction)
                 if amount > 0:
@@ -617,7 +614,7 @@ def collectAndDistributeTax(
         transactionsWithTaxAmounts = [separateTaxFromTransaction(t) for t in transactions]
         updatedTransactions = [t for t, _ in transactionsWithTaxAmounts]
         for category, config in configForWeightingCategory.items():
-            totalAmountForAccount: Dict[Account, MoneyAmount] = defaultdict(lambda: EMPTY_AMOUNT)
+            totalAmountForAccount: dict[Account, MoneyAmount] = defaultdict(lambda: EMPTY_AMOUNT)
             for t, mapping in transactionsWithTaxAmounts:
                 amountForCat = mapping.get(category, None)
                 if amountForCat is None: continue
@@ -643,11 +640,11 @@ def collectAndDistributeTax(
     return func
 
 @funcProcess()
-def sortByDate(ts: List[Transaction]):
+def sortByDate(ts: list[Transaction]):
     return sorted(ts, key=lambda t: t.date)
 
 @funcProcess()
-def sortByDateAndMore(ts: List[Transaction]):
+def sortByDateAndMore(ts: list[Transaction]):
     def key(t: Transaction):
         sourceLocationKey = ("", 0)
         if (sourceLocation := t.sourceLocation) is not None:
@@ -664,7 +661,7 @@ from itertools import groupby
 
 
 @funcProcess()
-def moveSalaryToFirstOfDay(trans: List[Transaction]) -> List[Transaction]:
+def moveSalaryToFirstOfDay(trans: list[Transaction]) -> list[Transaction]:
     """
     When there are multiple transactions on one day, move salary income to the top.
     Because they are on the same day, it should be safe against sorting by date later.

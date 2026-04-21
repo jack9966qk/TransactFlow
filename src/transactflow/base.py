@@ -8,14 +8,11 @@ from inspect import currentframe, getframeinfo
 from types import FrameType
 from typing import (
     Callable,
-    Dict,
     Hashable,
     Iterable,
     Iterator,
-    List,
     NamedTuple,
     Optional,
-    Tuple,
     TypeVar,
 )
 
@@ -401,12 +398,12 @@ class Transaction:
 
     account: Account
     rawRecord: str
-    sourceLocation: Optional[Tuple[str, int]]
+    sourceLocation: Optional[tuple[str, int]]
     category: Category
 
     # Extension properties: not all transactions have them.
     relatedTo: Optional[Account] = None
-    adjustments: Tuple[float, ...] = field(default_factory=lambda: ())
+    adjustments: tuple[float, ...] = field(default_factory=lambda: ())
     comment: Optional[str] = None
     referencedExchangeRates: ExchangeRates = EMPTY_EXCHANGE_RATES
     isUnrealized: bool = False
@@ -465,7 +462,7 @@ def syntheticTransaction(
     category: Category,
     account: Account,
     rawRecord: str = "",
-    sourceLocation: Optional[Tuple[str, int]] = None,
+    sourceLocation: Optional[tuple[str, int]] = None,
     relatedTo: Optional[Account] = None,
     isUnrealized: bool = False,
     isForecast: bool = False,
@@ -511,9 +508,9 @@ def printTransactionsAsCSV(ts: Iterable[Transaction]):
     print("\n".join(simpleCSVForTransaction(t) for t in ts))
 
 def splitTransactions(
-    transactions: List[Transaction],
+    transactions: list[Transaction],
     separatorCondition: Callable[[Transaction], bool]
-) -> Tuple[List[List[Transaction]], Optional[List[Transaction]]]:
+) -> tuple[list[list[Transaction]], Optional[list[Transaction]]]:
     results = []
     group = []
     leading = None
@@ -536,7 +533,7 @@ def splitTransactions(
 def sourceLocationFromFrame(
     frame: Optional[FrameType],
     useNegativeLineNumWithTotalNumLines: Optional[int] = None
-) -> Optional[Tuple[str, int]]:
+) -> Optional[tuple[str, int]]:
     if frame is None: return None
     frameinfo = getframeinfo(frame)
     relativePath = os.path.relpath(frameinfo.filename, os.getcwd())
@@ -585,12 +582,12 @@ def isMainSalaryIncome(trans: Transaction):
             trans.adjustedAmount.currency == JPY and
             trans.adjustedAmount.quantity > 200000)
 
-def sortedByDate(transactions: List[Transaction]) -> List[Transaction]:
+def sortedByDate(transactions: list[Transaction]) -> list[Transaction]:
     return sorted(transactions, key=lambda t: t.date)
 
 def splitIntoTimeSectionsBySalaryIncome(
-    transactions: List[Transaction]
-) -> Tuple[List[List[Transaction]], Optional[List[Transaction]]]:
+    transactions: list[Transaction]
+) -> tuple[list[list[Transaction]], Optional[list[Transaction]]]:
     return splitTransactions(sortedByDate(transactions), isMainSalaryIncome)
 
 def minMaxDateOf(transactions):
@@ -613,7 +610,7 @@ def memo(wrappedFn):
 
 # [[a]] -> [a]
 T = TypeVar("T")
-def concat(groups: List[List[T]]) -> List[T]:
+def concat(groups: list[list[T]]) -> list[T]:
     flatten = []
     for g in groups: flatten.extend(g)
     return flatten
@@ -621,8 +618,8 @@ def concat(groups: List[List[T]]) -> List[T]:
 HashableU = TypeVar("HashableU", bound=Hashable)
 def groupAsDict(
     items: Iterator[T], keyFn: Callable[[T], HashableU]
-) -> Dict[HashableU, List[T]]:
-    d: Dict[HashableU, List[T]] = {}
+) -> dict[HashableU, list[T]]:
+    d: dict[HashableU, list[T]] = {}
     for item in items:
         key = keyFn(item)
         l = d.get(key, [])
@@ -630,7 +627,7 @@ def groupAsDict(
         d[key] = l
     return d
 
-def popFirstMatch(items: List[T], matching: Callable[[T], bool]) -> Optional[T]:
+def popFirstMatch(items: list[T], matching: Callable[[T], bool]) -> Optional[T]:
     for idx, item in enumerate(items):
         if not matching(item): continue
         return items.pop(idx)

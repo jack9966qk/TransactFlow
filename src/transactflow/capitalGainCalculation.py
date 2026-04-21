@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from datetime import date
 from math import ceil
-from typing import Generator, Iterable, List, Optional, Union
+from typing import Generator, Iterable, Optional
 
 Date = date
 
@@ -21,7 +21,7 @@ class Sell:
 
 @dataclass
 class Activity:
-    vestOrSell: Union[Vest, Sell]
+    vestOrSell: Vest | Sell
     canSkip: bool = False
     date: Optional[Date] = None
 
@@ -71,7 +71,7 @@ def genCapitalGain(inUSD: bool) -> Generator[Optional[CapitalGainEntry], Activit
                 totalCostValue = totalCostNumUnits * avgPrice
         if DEBUG: print(f"{totalCostNumUnits=}, {totalCostValue=}")
 
-def capitalGain(activities: Iterable[Activity]) -> List[CapitalGainEntry]:
+def capitalGain(activities: Iterable[Activity]) -> list[CapitalGainEntry]:
     entries = []
     generator = genCapitalGain(inUSD=False)
     next(generator)

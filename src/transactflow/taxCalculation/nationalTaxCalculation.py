@@ -1,7 +1,6 @@
 import logging
 import math
 from dataclasses import dataclass, field
-from typing import Tuple
 
 # During last check, NTA webpages say: "[令和4年4月1日現在法令等]"
 SUPPORTED_YEARS = [2019, 2020, 2021, 2022, 2023, 2024, 2025, 2026]
@@ -33,7 +32,7 @@ class NationalTaxCalculator:
         assert(False)
 
     @property
-    def 所得税率(self) -> Tuple[float, float]:
+    def 所得税率(self) -> tuple[float, float]:
         """
         Tax rate in the format of (multipler, adjustment).
         For example: (0.10, -9_7500) means 課税される所得金額 * 10% - 97500.

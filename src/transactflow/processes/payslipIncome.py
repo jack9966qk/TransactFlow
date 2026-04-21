@@ -2,7 +2,7 @@ import csv
 from collections import defaultdict
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Callable, Dict, List, Optional, Tuple
+from typing import Callable, Optional
 
 from dateutil.parser import parse as parseDate
 
@@ -16,7 +16,7 @@ from ..processes.payslipAnnotationItem import PayslipAnnotationItem
 class PayslipAnnotationItemParserState:
     date: Date
     type: str
-    sourceLocation: Optional[Tuple[str, int]] = None
+    sourceLocation: Optional[tuple[str, int]] = None
     gross: float = 0
     healthInsurance: float = 0
     welfare: float = 0
@@ -54,8 +54,8 @@ class PayslipAnnotationItemParserState:
 def payslipAnnotationsFromTSV(
     tsvPath: Path,
     datesPath: Path,
-    updateParserState: Callable[[PayslipAnnotationItemParserState, Dict[str, str]]]
-) -> List[PayslipAnnotationItem]:
+    updateParserState: Callable[[PayslipAnnotationItemParserState, dict[str, str]]]
+) -> list[PayslipAnnotationItem]:
     paymentTypes = ["Payroll", "Bonus"]
     dates = iter([
         parseDate(s).date()
@@ -100,11 +100,11 @@ def payslipAnnotationsFromTSV(
                 yield parserStatesByType[paymentType].convertToAnnotation()
     return list(genAnnotationItems())
 
-def expectedTotalBalanceDelta(annotations: List[PayslipAnnotationItem]) -> MultiCurrencyAmount:
+def expectedTotalBalanceDelta(annotations: list[PayslipAnnotationItem]) -> MultiCurrencyAmount:
     totalPensionVoluntaryQuantity = sum(item.pensionVoluntary for item in annotations)
     return MultiCurrencyAmount(quantities={JPY: totalPensionVoluntaryQuantity})
 
-def makePayslipAnnotationsProcess(annotations: List[PayslipAnnotationItem]) -> Process:
+def makePayslipAnnotationsProcess(annotations: list[PayslipAnnotationItem]) -> Process:
     """
     Read payslip annotation file and update the salary and bonus transactions with more details.
     Specifically:
@@ -114,7 +114,7 @@ def makePayslipAnnotationsProcess(annotations: List[PayslipAnnotationItem]) -> P
         - Add synthetic transactions for all gross income and its deduction items
     """
     @funcProcess("applyPayslipAnnotations")
-    def applyPayslipAnnotations(transactions: List[Transaction]) -> List[Transaction]:
+    def applyPayslipAnnotations(transactions: list[Transaction]) -> list[Transaction]:
         if len(annotations) == 0:
             return transactions
         allNewSyntheticTransactions = []

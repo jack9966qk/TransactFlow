@@ -1,6 +1,6 @@
 """Conversions between native Transaction types and protobuf ExternalTransaction."""
 
-from typing import Optional, Tuple
+from typing import Optional
 
 from .base import (
     Account,
@@ -90,7 +90,7 @@ def fromExternalTransaction(et: pb.ExternalTransaction) -> Transaction:
     category = _categoryFromProto(et.category)
     exchangeRates = _exchangeRatesFromProto(et.exchange_rates)
 
-    sourceLocation: Optional[Tuple[str, int]] = None
+    sourceLocation: Optional[tuple[str, int]] = None
     if et.HasField("source_location"):
         sourceLocation = (et.source_location.file_path, et.source_location.line_number)
 

@@ -1,4 +1,4 @@
-from typing import List, Optional
+from typing import Optional
 
 from transactflow.rates import getOrRetrieveLatestRates
 
@@ -10,7 +10,7 @@ from .forecast import makeProcess as makeForecastProcess
 from .importer import makeProcess as makeImporterProcess
 
 
-def _optionalProcess(proc: Optional["Process"]) -> List["Process"]:
+def _optionalProcess(proc: Optional["Process"]) -> list["Process"]:
     return [proc] if proc is not None else []
 
 def allCombined(config: UserConfig, includeTaxProcesses: bool) -> GroupedProcess:
@@ -42,6 +42,6 @@ def preloadRatesWithConfig(config: UserConfig):
         stockUnits = stockConfig.stockUnits
     _ = getOrRetrieveLatestRates(stockUnits)
 
-def run(config: UserConfig, includeTaxProcesses: bool = True, progress: bool = True) -> List[Transaction]:
+def run(config: UserConfig, includeTaxProcesses: bool = True, progress: bool = True) -> list[Transaction]:
     preloadRatesWithConfig(config)
     return allCombined(config, includeTaxProcesses=includeTaxProcesses)([], progress=progress)

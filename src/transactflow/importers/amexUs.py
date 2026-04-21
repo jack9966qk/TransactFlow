@@ -1,5 +1,5 @@
 import os
-from typing import Dict, List, Optional, TextIO, cast
+from typing import Optional, TextIO, cast
 
 from dateutil.parser import parse as parseDate
 
@@ -12,8 +12,8 @@ from .importer import (
 )
 
 
-def readAmexUsCsvFiles(convertedDir: str, timestampPath: str) -> List[List[Transaction]]:
-    transactionGroups: List[List[Transaction]] = []
+def readAmexUsCsvFiles(convertedDir: str, timestampPath: str) -> list[list[Transaction]]:
+    transactionGroups: list[list[Transaction]] = []
     readFromDir = convertedDir
     def addTransactionsToGroup(fileName: str, incomplete: bool):
         readFromPath = os.path.join(readFromDir, fileName)
@@ -34,10 +34,10 @@ def readAmexUsCsvFiles(convertedDir: str, timestampPath: str) -> List[List[Trans
     )
     return transactionGroups
 
-def readAmexUsCsv(filename: str) -> List[Transaction]:
+def readAmexUsCsv(filename: str) -> list[Transaction]:
     with open(filename, "r", encoding="utf-8") as f:
         numLines = len(f.readlines())
-    def parseLine(row: Dict[str, str], raw: str, lineNum: int) -> Optional[Transaction]:
+    def parseLine(row: dict[str, str], raw: str, lineNum: int) -> Optional[Transaction]:
         amount = -float(row["Amount"].replace(",", ""))
         return Transaction(
             date=parseDate(row["Date"]).date(),

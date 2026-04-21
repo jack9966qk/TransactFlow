@@ -1,5 +1,5 @@
 from dataclasses import dataclass, field, replace
-from typing import Callable, Dict, List, Optional, Tuple
+from typing import Callable, Optional
 
 import transactflow.taxCalculation.localTaxCalculation as localTaxCalculation
 from transactflow.base import *
@@ -35,10 +35,10 @@ class EstimatedTaxSavings:
     to obtain the saving amount for each.
     """
     amountForFurusato: AmountsByTaxType
-    amountForGeneralDependents: List[AmountsByTaxType]
-    amountForSpecificDependents: List[AmountsByTaxType]
-    amountForElderlyDependentLivingTogether: List[AmountsByTaxType]
-    amountForElderlyDependentOthers: List[AmountsByTaxType]
+    amountForGeneralDependents: list[AmountsByTaxType]
+    amountForSpecificDependents: list[AmountsByTaxType]
+    amountForElderlyDependentLivingTogether: list[AmountsByTaxType]
+    amountForElderlyDependentOthers: list[AmountsByTaxType]
     amountForHousingBenefit: AmountsByTaxType
 
     @property
@@ -153,7 +153,7 @@ class TaxSummary:
         def separateSaving(
             before: TaxSummary,
             removeSaving: Callable[[TaxSummary], TaxSummary]
-        ) -> Tuple[TaxSummary, AmountsByTaxType]:
+        ) -> tuple[TaxSummary, AmountsByTaxType]:
             # print("before:")
             # rich.print(before)
             after = removeSaving(before)
@@ -170,7 +170,7 @@ class TaxSummary:
             before: TaxSummary,
             getNumDependents: Callable[[TaxSummary], int],
             applyNumDependents: Callable[[TaxSummary, int], TaxSummary],
-        ) -> Tuple[TaxSummary, List[AmountsByTaxType]]:
+        ) -> tuple[TaxSummary, list[AmountsByTaxType]]:
             amountsItems = []
             summary = before
             while (numDependents := getNumDependents(summary)) > 0:
@@ -219,7 +219,7 @@ class TaxSummary:
         )
 
 
-    def estimateMaximumFurusato(self) -> Tuple[int, Dict[int, AmountsByTaxType]]:
+    def estimateMaximumFurusato(self) -> tuple[int, dict[int, AmountsByTaxType]]:
         """
         Returns the estimated maximum amount of effective furusato donations, exceeding which
         results in no further tax benefit.
@@ -230,7 +230,7 @@ class TaxSummary:
         # amount exceeding total payment amount.
         baseSummary = replace(self, nationalTaxPrepayment=0)
         # Binary search between 0 and `salary + bonus + equity`
-        def binarySearch(low: int, delta: int, loggedAttempts: Dict[int, AmountsByTaxType]) -> int:
+        def binarySearch(low: int, delta: int, loggedAttempts: dict[int, AmountsByTaxType]) -> int:
             if delta <= 0: return low
             mid = low + int(delta / 2)
             high = low + delta
@@ -252,7 +252,7 @@ class TaxSummary:
             ):
                 return binarySearch(low, mid - low, loggedAttempts)
             else: return low
-        loggedAttempts: Dict[int, AmountsByTaxType] = {}
+        loggedAttempts: dict[int, AmountsByTaxType] = {}
         estimatedMaximum = binarySearch(
             low=0, delta=int(self.salary + self.bonus + self.equity), loggedAttempts=loggedAttempts)
         return estimatedMaximum, loggedAttempts
@@ -260,7 +260,7 @@ class TaxSummary:
 
 def yearlyTaxSummaryFromTransactions(year: int,
                                      estimateFullYear: bool,
-                                     transactions: List[Transaction],
+                                     transactions: list[Transaction],
                                      bonusOverride: Optional[float] = None,
                                      equityOverride: Optional[float] = None) -> TaxSummary:
     """
@@ -336,7 +336,7 @@ def printTaxSummary(summary: TaxSummary):
     totalNationalTax = summary.nationalTaxToBePaid + summary.nationalTaxPrepayment
     segmentedTotalLocalTax = summary.segmentedTotalLocalTax
     netTotalTax = summary.nationalTaxToBePaid + summary.segmentedTotalLocalTax.forAll
-    salaryBonusSegments: List[Tuple[str, float, float]] = [
+    salaryBonusSegments: list[tuple[str, float, float]] = [
         ("Income", summary.salary, summary.bonus),
         ("Social security", summary.salarySocialSecurity, summary.bonusSocialSecurity),
         ("Withholding", summary.salaryWithholding, summary.bonusWithholding)

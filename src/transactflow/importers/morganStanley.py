@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Dict, List, Optional, TextIO, cast
+from typing import Optional, TextIO, cast
 
 from dateutil.parser import parse as parseDate
 
@@ -19,7 +19,7 @@ class VestedEquityItem:
 
     @classmethod
     def fromCsvRow(
-        cls, row: Dict[str, str], usdJpyRateAtDate: Dict[Date, float],
+        cls, row: dict[str, str], usdJpyRateAtDate: dict[Date, float],
         config: MorganStanleyImportConfig
     ) -> "VestedEquityItem":
         def usdJpyRate():
@@ -43,7 +43,7 @@ class UnvestedEquityItem:
     grant: str
 
     @classmethod
-    def fromCsvRow(cls, row: Dict[str, str]) -> "UnvestedEquityItem":
+    def fromCsvRow(cls, row: dict[str, str]) -> "UnvestedEquityItem":
         return UnvestedEquityItem(
             grantDate=parseDate(row["Grant Date"]).date(),
             vestingDate=parseDate(row["Vesting Date"]).date(),
@@ -58,7 +58,7 @@ class WithdrawItem:
     netUSDAmount: float
 
     @classmethod
-    def fromCsvRow(cls, row: Dict[str, str]) -> "WithdrawItem":
+    def fromCsvRow(cls, row: dict[str, str]) -> "WithdrawItem":
         return WithdrawItem(
             date=parseDate(row["Execution Date"]).date(),
             usdPerShare=float(row["Price"].replace(",", "").strip("$")),
@@ -67,11 +67,11 @@ class WithdrawItem:
 
 def parseVested(
     config: MorganStanleyImportConfig,
-) -> List[Transaction]:
+) -> list[Transaction]:
     statementFilePath = config.equityStatementPath
     def skipStatementLine(raw: str) -> bool:
         return config.vestedParsingShouldIgnore({}, raw, 0)
-    def parseVestedLine(row: Dict[str, str], raw: str, lineNum: int) -> Optional[Transaction]:
+    def parseVestedLine(row: dict[str, str], raw: str, lineNum: int) -> Optional[Transaction]:
         if config.vestedParsingShouldIgnore(row, raw, lineNum):
             return None
         item = VestedEquityItem.fromCsvRow(row, config.usdJpyRateAtDate, config)
@@ -96,11 +96,11 @@ def parseVested(
 
 def parseUnvested(
     config: MorganStanleyImportConfig,
-) -> List[Transaction]:
+) -> list[Transaction]:
     unvestedFilePath = config.equityUnvestedPath
     def skipUnvestedLine(raw: str) -> bool:
         return config.unvestedParsingShouldIgnore({}, raw, 0)
-    def parseUnvestedLine(row: Dict[str, str], raw: str, lineNum: int) -> Optional[Transaction]:
+    def parseUnvestedLine(row: dict[str, str], raw: str, lineNum: int) -> Optional[Transaction]:
         if raw.startswith('The numbers on this statement reflect'): return None
         item = UnvestedEquityItem.fromCsvRow(row)
         description = f"Unvested equity {item.numUnits} Stock Units"
@@ -121,14 +121,14 @@ def parseUnvested(
 
 def parseWithdraw(
     config: MorganStanleyImportConfig,
-) -> List[Transaction]:
+) -> list[Transaction]:
     withdrawReportFilePath = config.withdrawPath
     def skipWithdrawLine(raw: str) -> bool:
         return config.withdrawParsingShouldIgnore({}, raw, 0)
     # TODO: Replace this workaround with an updated CsvImporter that accepts multiple transactions
     # generated per line.
-    gains: List[Transaction] = []
-    def parseWithdrawLine(row: Dict[str, str], raw: str, lineNum: int) -> Optional[Transaction]:
+    gains: list[Transaction] = []
+    def parseWithdrawLine(row: dict[str, str], raw: str, lineNum: int) -> Optional[Transaction]:
         if config.withdrawParsingShouldIgnore(row, raw, lineNum):
             return None
         item = WithdrawItem.fromCsvRow(row)
@@ -168,6 +168,6 @@ def parseWithdraw(
         sales = importer.parseFile(cast(TextIO, f))
     return sales + gains
 
-def readMorganStanleyCsv(config: MorganStanleyImportConfig) -> List[Transaction]:
+def readMorganStanleyCsv(config: MorganStanleyImportConfig) -> list[Transaction]:
     withoutUnvested = parseVested(config) + parseWithdraw(config)
     return withoutUnvested + parseUnvested(config)
